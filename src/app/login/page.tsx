@@ -109,10 +109,10 @@ export default function LoginPage() {
         {/* Top Header branding branding */}
         <div className="text-center space-y-2">
           <div className="inline-flex p-3 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 mb-1">
-            <Sparkles className="w-6 h-6" />
+            <img src="/logo.png" alt="NovaLearn Logo" className="w-10 h-10 object-contain rounded-lg" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white">
-            EdTech Platform Access
+            NovaLearn Access
           </h1>
           <p className="text-xs text-slate-400 max-w-xs mx-auto">
             Secure authentication portal for administrators, instructors, and target candidates.

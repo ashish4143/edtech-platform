@@ -56,13 +56,11 @@ export default function Sidebar({
     <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen shrink-0 shadow-xl border-r border-slate-800">
       {/* Brand Header */}
       <div className="p-5 border-b border-slate-800 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-indigo-500/20">
-          E
-        </div>
+        <img src="/logo.png" alt="NovaLearn Logo" className="w-10 h-10 object-contain rounded-xl shadow-md shadow-indigo-500/20" />
         <div>
-          <h1 className="font-bold text-white tracking-wide text-sm">EdTech MVP</h1>
+          <h1 className="font-bold text-white tracking-wide text-sm">NovaLearn</h1>
           <span className="text-[10px] text-indigo-400 font-semibold tracking-wider uppercase px-1.5 py-0.5 bg-indigo-950/60 rounded border border-indigo-800/40">
-            {userRole} Platform
+            {userRole} Portal
           </span>
         </div>
       </div>

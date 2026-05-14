@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EdTech Test Creation & Management Platform",
-  description: "Advanced assessment compiler and role simulator MVP",
+  title: "NovaLearn | Interactive Assessment Platform",
+  description: "A complete learning and assessment ecosystem for modern coaching institutes.",
 };
 
 export default function RootLayout({
