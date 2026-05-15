@@ -44,7 +44,7 @@ async function trySend(to: string, subject: string, html: string, label: string)
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const info = await transporter.sendMail({
-        from: `"EdTech Platform" <${process.env.EMAIL_USER}>`,
+        from: `"EdTech Platform" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
         to,
         subject,
         html,

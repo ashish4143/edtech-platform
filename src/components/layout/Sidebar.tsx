@@ -38,12 +38,12 @@ export default function Sidebar({
 
     const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    ...(isTeacherOrAdmin ? [{ id: 'students', label: 'Students Roster', icon: Users }] : []),
+    { id: 'students', label: 'Student Directory', icon: Users },
+    ...(userRole === Role.Admin ? [{ id: 'teachers', label: 'Teacher Management', icon: UserCircle }] : []),
     ...(isTeacherOrAdmin ? [{ id: 'provision', label: 'Provision Students', icon: UserPlus }] : []),
     ...(isTeacherOrAdmin ? [{ id: 'batches', label: 'Batches', icon: Layers }] : []),
     ...(isTeacherOrAdmin ? [{ id: 'questions', label: 'Question Bank', icon: Database }] : []),
     { id: 'tests', label: isTeacherOrAdmin ? 'Manage Tests' : 'Available Tests', icon: FileText },
-    ...(isTeacherOrAdmin ? [{ id: 'dispatch', label: 'Bulk Dispatch', icon: Send }] : []),
     ...(isTeacherOrAdmin ? [{ id: 'evaluate', label: 'Evaluation', icon: Activity }] : []),
     ...(isTeacherOrAdmin ? [{ id: 'batch-performance', label: 'Batch Performance', icon: Trophy }] : []),
     ...(!isTeacherOrAdmin ? [{ id: 'practice', label: 'Practice Mode', icon: Dumbbell }] : []),

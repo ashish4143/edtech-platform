@@ -6,11 +6,12 @@ interface StudentDashboardProps {
   onStartAttempt: (testId: string) => void;
   userId: string;
   userName?: string | null;
+  autoReviewAttemptId?: string | null;
+  onReviewClosed?: () => void;
 }
 
-export default function StudentDashboard({ onStartAttempt, userId, userName }: StudentDashboardProps) {
+export default function StudentDashboard({ onStartAttempt, userId, userName, autoReviewAttemptId, onReviewClosed }: StudentDashboardProps) {
   const [assignedTests, setAssignedTests] = useState<any[]>([]);
-  const [availableTests, setAvailableTests] = useState<any[]>([]);
   const [pastResults, setPastResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +45,17 @@ export default function StudentDashboard({ onStartAttempt, userId, userName }: S
   };
 
   useEffect(() => {
+    if (autoReviewAttemptId) {
+      handleOpenReview(autoReviewAttemptId);
+    }
+  }, [autoReviewAttemptId]);
+
+  const closeReview = () => {
+    setReviewAttemptId(null);
+    if (onReviewClosed) onReviewClosed();
+  };
+
+  useEffect(() => {
     const fetchStudentWorkspace = async () => {
       try {
         // Fetch explicit dispatched test assignments assigned directly to this candidate ID
@@ -52,11 +64,6 @@ export default function StudentDashboard({ onStartAttempt, userId, userName }: S
         if (asData.assignments) {
           setAssignedTests(asData.assignments);
         }
-
-        // Fetch published open tests
-        const tRes = await fetch('/api/tests?status=Published');
-        const tData = await tRes.json();
-        if (tData.tests) setAvailableTests(tData.tests);
 
         // Fetch user analytics performance trends
         const aRes = await fetch(`/api/analytics/student/${userId}`);
@@ -102,20 +109,30 @@ export default function StudentDashboard({ onStartAttempt, userId, userName }: S
       </div>
 
       {/* Explicitly Assigned / Dispatched High-Priority Queue */}
-      {assignedTests.length > 0 && (
-        <div className="space-y-4 bg-indigo-50/50 dark:bg-indigo-950/20 p-5 rounded-2xl border border-indigo-100 dark:border-indigo-900/40">
-          <div className="flex items-center gap-2">
-            <BellRing className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-bounce" />
-            <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-900 dark:text-indigo-300">
-                Dispatched Assessments Assigned to You
-              </h2>
-              <p className="text-[11px] text-indigo-600 dark:text-indigo-400">
-                Instructors have explicitly dispatched these modules to your profile queue
-              </p>
-            </div>
+      <div className="space-y-4 bg-indigo-50/50 dark:bg-indigo-950/20 p-5 rounded-2xl border border-indigo-100 dark:border-indigo-900/40">
+        <div className="flex items-center gap-2">
+          <BellRing className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-bounce" />
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-900 dark:text-indigo-300">
+              Dispatched Assessments Assigned to You
+            </h2>
+            <p className="text-[11px] text-indigo-600 dark:text-indigo-400">
+              Instructors have explicitly dispatched these modules to your profile queue
+            </p>
           </div>
+        </div>
 
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-32 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+            ))}
+          </div>
+        ) : assignedTests.length === 0 ? (
+          <div className="p-8 rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800/50 text-center text-xs text-slate-400">
+            No active test assignments pending for you. Relax and check back later!
+          </div>
+        ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {assignedTests.map((a) => {
               const t = a.test;
@@ -155,61 +172,6 @@ export default function StudentDashboard({ onStartAttempt, userId, userName }: S
                 </div>
               );
             })}
-          </div>
-        </div>
-      )}
-
-      {/* Available Live Tests Queue */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Published Tests</h2>
-          <p className="text-[11px] text-slate-500">Select an assessment to start your secure timed evaluation</p>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-32 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse"></div>
-            ))}
-          </div>
-        ) : availableTests.length === 0 ? (
-          <div className="p-8 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400">
-            No active test schedules pending for your standard. Check back later.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {availableTests.map((t) => (
-              <div 
-                key={t.id}
-                className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between gap-4 hover:shadow-md transition-shadow relative overflow-hidden group"
-              >
-                <div className="absolute top-0 right-0 w-2 h-full bg-indigo-600/80 group-hover:bg-indigo-600 transition-colors"></div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded">
-                      Std {t.grade} • {t.subject}
-                    </span>
-                    <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> {t.durationMins}m
-                    </span>
-                  </div>
-                  <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm line-clamp-1">
-                    {t.title}
-                  </h3>
-                  <p className="text-[11px] text-slate-500">
-                    Board: <span className="font-semibold text-slate-700 dark:text-slate-300">{t.board}</span> | 
-                    Total Marks: <span className="font-semibold text-slate-700 dark:text-slate-300">{t.totalMarks}</span>
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => onStartAttempt(t.id)}
-                  className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-indigo-600/20 transition-colors"
-                >
-                  <Play className="w-3 h-3 fill-current" /> Start Attempt
-                </button>
-              </div>
-            ))}
           </div>
         )}
       </div>
@@ -282,7 +244,7 @@ export default function StudentDashboard({ onStartAttempt, userId, userName }: S
                 </h3>
               </div>
               <button 
-                onClick={() => setReviewAttemptId(null)}
+                onClick={closeReview}
                 className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 transition-colors"
               >
                 <X className="w-5 h-5" />

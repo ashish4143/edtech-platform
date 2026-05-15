@@ -48,21 +48,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Test not found' }, { status: 404 });
     }
 
-    // Check for an existing attempt to prevent restarting submitted tests.
+    // CHECK GATE: Ensure the student has an active assignment for this test
+    // This allows the Admin to trigger re-tests simply by dispatching the test again, creating a new assignment.
+    const assignment = await prisma.testAssignment.findUnique({
+      where: {
+        testId_studentId: {
+          testId,
+          studentId,
+        },
+      },
+    });
+
+    if (!assignment) {
+      return NextResponse.json(
+        { error: 'You are not authorized to start this test. It must be assigned to you by an administrator.' },
+        { status: 403 }
+      );
+    }
+
+    // Check if an attempt is currently IN_PROGRESS to prevent double-starting
     let activeAttempt = await prisma.attempt.findFirst({
       where: {
         testId,
         studentId,
+        status: AttemptStatus.In_Progress,
       },
       orderBy: { startTime: 'desc' },
     });
-
-    if (activeAttempt && activeAttempt.status !== AttemptStatus.In_Progress) {
-      return NextResponse.json(
-        { error: 'This test has already been submitted by the authenticated student' },
-        { status: 409 }
-      );
-    }
 
     if (!activeAttempt) {
       activeAttempt = await prisma.attempt.create({

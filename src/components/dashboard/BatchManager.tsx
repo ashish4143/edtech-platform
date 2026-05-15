@@ -26,7 +26,9 @@ export default function BatchManager({ userId }: { userId: string }) {
   const loadTests = useCallback(async () => { try { const r = await fetch('/api/tests?status=Published'); const d = await r.json(); setTests((d.tests || []).map((t: any) => ({ id: t.id, title: t.title, subject: t.subject }))); } catch {} }, []);
   useEffect(() => { load(); loadTests(); }, [load, loadTests]);
 
-  const openBatch = async (id: string) => { try { const r = await fetch(`/api/batches/${id}`); const d = await r.json(); setDetail(d.batch); } catch {} };
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+
+  const openBatch = async (id: string) => { try { const r = await fetch(`/api/batches/${id}`); const d = await r.json(); setDetail(d.batch); setSelectedStudents(d.batch.enrollments.map((e: any) => e.student.id)); } catch {} };
 
   const createBatch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,10 +38,25 @@ export default function BatchManager({ userId }: { userId: string }) {
 
   const removeStudent = async (sid: string) => { if (!detail) return; await fetch(`/api/batches/${detail.id}/enroll`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ studentId: sid }) }); openBatch(detail.id); };
 
+  const toggleStudent = (sid: string) => {
+    setSelectedStudents(prev => prev.includes(sid) ? prev.filter(id => id !== sid) : [...prev, sid]);
+  };
+
   const dispatchTest = async () => {
-    if (!detail || !dispatchTestId) return;
+    if (!detail || !dispatchTestId || selectedStudents.length === 0) return;
     setDispatching(true); setDispatchMsg('');
-    try { const r = await fetch(`/api/batches/${detail.id}/dispatch`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ testId: dispatchTestId }) }); const d = await r.json(); setDispatchMsg(d.message || 'Done'); openBatch(detail.id); } catch { setDispatchMsg('Failed'); }
+    try { 
+      const r = await fetch(`/api/assignments/targeted`, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ testId: dispatchTestId, studentIds: selectedStudents, batchId: detail.id }) 
+      }); 
+      const d = await r.json(); 
+      setDispatchMsg(d.message || 'Dispatched successfully'); 
+      openBatch(detail.id); 
+    } catch { 
+      setDispatchMsg('Failed to dispatch tests'); 
+    }
     setDispatching(false);
   };
 
@@ -53,24 +70,51 @@ export default function BatchManager({ userId }: { userId: string }) {
         </div>
 
         <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2"><Send className="w-4 h-4 text-indigo-500" /> Dispatch Test</h3>
-          <div className="flex gap-3">
-            <select value={dispatchTestId} onChange={e => setDispatchTestId(e.target.value)} className="flex-1 py-2 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white">
-              <option value="">Select test...</option>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3 flex items-center justify-between">
+            <span className="flex items-center gap-2"><Send className="w-4 h-4 text-indigo-500" /> Targeted Dispatch</span>
+            <span className="text-xs font-normal text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">{selectedStudents.length} selected</span>
+          </h3>
+          <div className="flex flex-col md:flex-row gap-3 items-start">
+            <select value={dispatchTestId} onChange={e => setDispatchTestId(e.target.value)} className="w-full md:flex-1 py-2 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white">
+              <option value="">Select test to dispatch...</option>
               {tests.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
             </select>
-            <button onClick={dispatchTest} disabled={dispatching || !dispatchTestId} className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold shadow-md">
-              {dispatching ? <RefreshCw className="w-3.5 h-3.5 inline animate-spin" /> : 'Dispatch'}
+            <button onClick={dispatchTest} disabled={dispatching || !dispatchTestId || selectedStudents.length === 0} className="w-full md:w-auto px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold shadow-md shrink-0">
+              {dispatching ? <RefreshCw className="w-3.5 h-3.5 inline animate-spin" /> : 'Dispatch to Selected'}
             </button>
           </div>
           {dispatchMsg && <p className="mt-2 text-xs text-emerald-500 font-medium flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> {dispatchMsg}</p>}
         </div>
 
         <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2"><Users className="w-4 h-4 text-emerald-500" /> Enrolled Students</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2"><Users className="w-4 h-4 text-emerald-500" /> Enrolled Students</h3>
+            <button onClick={() => setSelectedStudents(detail.enrollments.map(e => e.student.id))} className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded">Select All</button>
+          </div>
           {detail.enrollments.length === 0 ? <p className="text-xs text-slate-400 py-4 text-center">No students enrolled. Use Provision Students to add.</p> : (
-            <table className="w-full text-xs"><thead><tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500"><th className="text-left py-2 pr-4 font-medium">Name</th><th className="text-left py-2 pr-4 font-medium">Email</th><th className="text-left py-2 pr-4 font-medium">Phone</th><th className="text-left py-2 font-medium"></th></tr></thead>
-            <tbody>{detail.enrollments.map(e => (<tr key={e.id} className="border-b border-slate-100 dark:border-slate-800/50"><td className="py-2 pr-4 text-slate-900 dark:text-slate-200 font-medium">{e.student.name}</td><td className="py-2 pr-4 text-slate-600 dark:text-slate-400">{e.student.email}</td><td className="py-2 pr-4 text-slate-600 dark:text-slate-400">{e.student.phone || '—'}</td><td className="py-2"><button onClick={() => removeStudent(e.student.id)} className="text-red-400 hover:text-red-300"><Trash2 className="w-3.5 h-3.5" /></button></td></tr>))}</tbody></table>
+            <table className="w-full text-xs">
+              <thead><tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500">
+                <th className="py-2 pr-2 w-8"></th><th className="text-left py-2 pr-4 font-medium">Name</th><th className="text-left py-2 pr-4 font-medium hidden sm:table-cell">Email</th><th className="text-left py-2 pr-4 font-medium hidden md:table-cell">Phone</th><th className="text-left py-2 font-medium"></th>
+              </tr></thead>
+              <tbody>
+                {detail.enrollments.map(e => {
+                  const isSelected = selectedStudents.includes(e.student.id);
+                  return (
+                    <tr key={e.id} className={`border-b border-slate-100 dark:border-slate-800/50 transition-colors ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-950/20' : ''}`}>
+                      <td className="py-2 pr-2">
+                        <input type="checkbox" checked={isSelected} onChange={() => toggleStudent(e.student.id)} className="w-3.5 h-3.5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer" />
+                      </td>
+                      <td className="py-2 pr-4 text-slate-900 dark:text-slate-200 font-medium">{e.student.name}</td>
+                      <td className="py-2 pr-4 text-slate-600 dark:text-slate-400 hidden sm:table-cell">{e.student.email}</td>
+                      <td className="py-2 pr-4 text-slate-600 dark:text-slate-400 hidden md:table-cell">{e.student.phone || '—'}</td>
+                      <td className="py-2 text-right">
+                        <button onClick={() => removeStudent(e.student.id)} className="text-red-400 hover:text-red-500 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-950 transition-colors" title="Remove from batch"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </div>
 

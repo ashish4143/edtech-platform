@@ -18,6 +18,7 @@ import ForcePasswordChange from '@/components/auth/ForcePasswordChange';
 import StudentProvisioning from '@/components/dashboard/StudentProvisioning';
 import BatchManager from '@/components/dashboard/BatchManager';
 import BatchPerformance from '@/components/analytics/BatchPerformance';
+import TeacherManager from '@/components/dashboard/TeacherManager';
 import { Role } from '@prisma/client';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 
@@ -31,6 +32,7 @@ export default function Home() {
   const [activeAttemptId, setActiveAttemptId] = useState<string | null>(null);
   const [activeTestDetails, setActiveTestDetails] = useState<any>(null);
   const [activeDuration, setActiveDuration] = useState<number>(60);
+  const [autoReviewAttemptId, setAutoReviewAttemptId] = useState<string | null>(null);
 
   // Practice mode state
   const [practiceConfig, setPracticeConfig] = useState<any | null>(null);
@@ -118,9 +120,9 @@ export default function Home() {
   };
 
   const handleFinishSubmit = (summary: any) => {
-    alert(`Assessment finalized successfully! Aggregate Score: ${summary.totalScore} Marks.`);
     setActiveAttemptId(null);
     setActiveTestDetails(null);
+    setAutoReviewAttemptId(summary.attemptId);
     setActiveTab('dashboard');
   };
 
@@ -180,12 +182,18 @@ export default function Home() {
                 onStartAttempt={handleStartAttempt} 
                 userId={resolvedUserId}
                 userName={resolvedUserName}
+                autoReviewAttemptId={autoReviewAttemptId}
+                onReviewClosed={() => setAutoReviewAttemptId(null)}
               />
             )
           )}
 
           {activeTab === 'students' && (
-            <StudentList />
+            <StudentList userRole={effectiveRole} />
+          )}
+
+          {activeTab === 'teachers' && effectiveRole === Role.Admin && (
+            <TeacherManager />
           )}
 
           {activeTab === 'provision' && (effectiveRole === Role.Admin || effectiveRole === Role.Teacher) && (
@@ -235,6 +243,8 @@ export default function Home() {
               <StudentDashboard 
                 onStartAttempt={handleStartAttempt} 
                 userId={resolvedUserId} 
+                autoReviewAttemptId={autoReviewAttemptId}
+                onReviewClosed={() => setAutoReviewAttemptId(null)}
               />
             </div>
           )}

@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { Role } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { generateStudentPassword } from '@/lib/studentCredentials';
+import { sendWelcomeCredentials } from '@/lib/mailer';
 
 export async function POST(request: Request) {
   try {
@@ -51,6 +52,15 @@ export async function POST(request: Request) {
         role: true,
         createdAt: true,
       },
+    });
+
+    // Send the welcome email with credentials
+    const loginUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/login`;
+    await sendWelcomeCredentials({
+      to: email,
+      studentName: name,
+      tempPassword: generatedPassword,
+      loginUrl
     });
 
     return NextResponse.json({ user, generatedPassword }, { status: 201 });
