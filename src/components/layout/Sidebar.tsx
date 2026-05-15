@@ -8,14 +8,13 @@ import {
   Settings, 
   LogOut, 
   UserCircle,
-  Users,
   Dumbbell,
   UserCircle2,
-  Send,
   Activity,
   Layers,
   UserPlus,
-  Trophy
+  Trophy,
+  Search
 } from 'lucide-react';
 import { Role } from '@prisma/client';
 
@@ -36,9 +35,8 @@ export default function Sidebar({
 }: SidebarProps) {
   const isTeacherOrAdmin = userRole === Role.Admin || userRole === Role.Teacher;
 
-    const navItems = [
+  const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'students', label: 'Student Directory', icon: Users },
     ...(userRole === Role.Admin ? [{ id: 'teachers', label: 'Teacher Management', icon: UserCircle }] : []),
     ...(isTeacherOrAdmin ? [{ id: 'provision', label: 'Provision Students', icon: UserPlus }] : []),
     ...(isTeacherOrAdmin ? [{ id: 'batches', label: 'Batches', icon: Layers }] : []),
@@ -51,6 +49,7 @@ export default function Sidebar({
     ...(!isTeacherOrAdmin ? [{ id: 'profile', label: 'My Profile', icon: UserCircle2 }] : []),
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
+
 
   return (
     <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen shrink-0 shadow-xl border-r border-slate-800">

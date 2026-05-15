@@ -2,10 +2,16 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Role } from '@prisma/client';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const q = searchParams.get('q')?.trim() || '';
+
     const students = await prisma.user.findMany({
-      where: { role: Role.Student },
+      where: {
+        role: Role.Student,
+        ...(q ? { name: { contains: q, mode: 'insensitive' } } : {}),
+      },
       select: {
         id: true,
         name: true,
@@ -14,8 +20,13 @@ export async function GET() {
         grade: true,
         board: true,
         createdAt: true,
+        batchEnrollments: {
+          select: { batch: { select: { name: true, grade: true } } },
+          take: 1,
+        },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { name: 'asc' },
+      take: 20,
     });
 
     return NextResponse.json({ students });
