@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { Clock, Send, ChevronLeft, ChevronRight, AlertTriangle, X, ShieldCheck, Eye } from 'lucide-react';
 import { QuestionType } from '@prisma/client';
+import { useDialog } from '@/components/ui/DialogProvider';
 
 // Simple hash to generate a seed from a string (attemptId)
 function cyrb128(str: string) {
@@ -58,6 +59,7 @@ export default function TestInterface({
   const [agreed, setAgreed] = useState(false);
   const [agreeChecked, setAgreeChecked] = useState(false);
   const [showTabWarning, setShowTabWarning] = useState(false);
+  const { toast } = useDialog();
 
   // Deterministically shuffle questions and options based on the attemptId
   const questionsList = useMemo(() => {
@@ -138,7 +140,7 @@ export default function TestInterface({
       if (res.ok) {
         onFinishSubmit(data.attemptSummary);
       } else {
-        alert(data.error || 'Submission processing issue occurred.');
+        toast(data.error || 'Submission processing issue occurred.', 'error');
         onCancel();
       }
     } catch (err) {

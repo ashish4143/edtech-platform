@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserCircle, UserPlus, X, CheckCircle2, Layers } from 'lucide-react';
+import { useDialog } from '@/components/ui/DialogProvider';
 
 export default function TeacherManager() {
+  const { toast } = useDialog();
   const [teachers, setTeachers] = useState<any[]>([]);
   const [batches, setBatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,7 +91,7 @@ export default function TeacherManager() {
 
   const handleAssignBatch = async (teacherId: string) => {
     if (!selectedBatchId) {
-      alert('Select a batch first');
+      toast('Select a batch first', 'info');
       return;
     }
 
@@ -104,11 +106,11 @@ export default function TeacherManager() {
         fetchData();
         setAssigningTeacherId(null);
       } else {
-        alert('Failed to assign batch');
+        toast('Failed to assign batch', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Error assigning batch');
+      toast('Error assigning batch', 'error');
     }
   };
 

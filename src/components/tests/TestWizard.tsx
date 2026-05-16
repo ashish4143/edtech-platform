@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ArrowLeft, ArrowRight, Check, Sparkles, RefreshCw, X } from 'lucide-react';
 import { Difficulty } from '@prisma/client';
+import { useDialog } from '@/components/ui/DialogProvider';
 
 const step1Schema = z.object({
   title: z.string().min(3, 'Title is required'),
@@ -22,6 +23,7 @@ interface TestWizardProps {
 }
 
 export default function TestWizard({ onComplete, onCancel, userId }: TestWizardProps) {
+  const { toast } = useDialog();
   const [step, setStep] = useState(1);
   const [generationMode, setGenerationMode] = useState<'auto' | 'manual'>('auto');
   
@@ -154,7 +156,7 @@ export default function TestWizard({ onComplete, onCancel, userId }: TestWizardP
     );
 
     if (!nextCandidate) {
-      alert('No more unique un-exhausted candidate questions available for this subject pool.');
+      toast('No more unique un-exhausted candidate questions available for this subject pool.', 'info');
       return;
     }
 

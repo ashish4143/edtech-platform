@@ -1,6 +1,7 @@
 'use strict';
 import React, { useState, useEffect } from 'react';
 import { Play, Award, Clock, CheckCircle2, BellRing, X, Check, ListOrdered, Trophy, Loader2 } from 'lucide-react';
+import { useDialog } from '@/components/ui/DialogProvider';
 
 interface StudentDashboardProps {
   onStartAttempt: (testId: string) => void;
@@ -11,6 +12,7 @@ interface StudentDashboardProps {
 }
 
 export default function StudentDashboard({ onStartAttempt, userId, userName, autoReviewAttemptId, onReviewClosed }: StudentDashboardProps) {
+  const { toast } = useDialog();
   const [assignedTests, setAssignedTests] = useState<any[]>([]);
   const [pastResults, setPastResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,12 +34,12 @@ export default function StudentDashboard({ onStartAttempt, userId, userName, aut
       if (res.ok && data.attempt) {
         setReviewData(data);
       } else {
-        alert(data.error || 'Failed to load detailed scorecard answers');
+        toast(data.error || 'Failed to load scorecard', 'error');
         setReviewAttemptId(null);
       }
     } catch (err) {
       console.error(err);
-      alert('Network timeout requesting scorecard evaluation review');
+      toast('Network error loading scorecard', 'error');
       setReviewAttemptId(null);
     } finally {
       setReviewLoading(false);

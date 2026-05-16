@@ -23,9 +23,11 @@ import QuickTestWizard from '@/components/tests/QuickTestWizard';
 import BatchResults from '@/components/dashboard/BatchResults';
 import { Role } from '@prisma/client';
 import { ShieldCheck, Loader2 } from 'lucide-react';
+import { useDialog } from '@/components/ui/DialogProvider';
 
 export default function Home() {
   const { data: session, status, update } = useSession();
+  const { toast } = useDialog();
 
   // Navigation states
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -114,7 +116,7 @@ export default function Home() {
         setActiveTestDetails(data.testDetails);
         setActiveDuration(data.durationMins);
       } else {
-        alert(data.error || 'Failed to initialize active test payload');
+        toast(data.error || 'Failed to start test', 'error');
       }
     } catch (err) {
       console.error('Launch failure', err);

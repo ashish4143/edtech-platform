@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Users, RefreshCw, Pencil, Trash2, Send, X, CheckCircle2, AlertCircle, ChevronDown } from 'lucide-react';
+import { useDialog } from '@/components/ui/DialogProvider';
 
 interface Student {
   id: string;
@@ -16,6 +17,7 @@ interface Student {
 const GRADES = ['7', '8', '9', '10', '11', '12'];
 
 export default function StudentManager() {
+  const { confirm } = useDialog();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterGrade, setFilterGrade] = useState('');
@@ -56,7 +58,8 @@ export default function StudentManager() {
 
   // ── Delete Student ──
   const handleDelete = async (student: Student) => {
-    if (!confirm(`Permanently delete ${student.name}? This removes all their data including test attempts.`)) return;
+    const ok = await confirm({ title: 'Delete Student?', message: `Permanently delete ${student.name}? This removes all their data including test attempts and cannot be undone.`, confirmLabel: 'Delete Permanently', variant: 'danger' });
+    if (!ok) return;
     setActionLoading(student.id);
     try {
       const res = await fetch(`/api/users/${student.id}`, { method: 'DELETE' });

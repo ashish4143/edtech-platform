@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Layers, Plus, Users, Send, ChevronRight, Trash2, RefreshCw, CheckCircle2, X, UserPlus, MoreVertical, Pencil } from 'lucide-react';
+import { useDialog } from '@/components/ui/DialogProvider';
 
 interface Batch { id: string; name: string; grade: string; board: string; isActive: boolean; createdBy: { name: string }; _count: { enrollments: number; dispatches: number }; }
 interface Student { id: string; name: string; email: string; phone: string | null; grade?: string | null; }
@@ -11,6 +12,7 @@ interface TestOpt { id: string; title: string; subject: string; }
 const GRADES = ['7','8','9','10','11','12'];
 
 export default function BatchManager({ userId }: { userId: string }) {
+  const { confirm, toast } = useDialog();
   const [batches, setBatches] = useState<Batch[]>([]);
   const [detail, setDetail] = useState<BatchDetail | null>(null);
   const [tests, setTests] = useState<TestOpt[]>([]);
@@ -123,7 +125,8 @@ export default function BatchManager({ userId }: { userId: string }) {
   // ── Batch Delete ──
   const handleBatchDelete = async (b: Batch) => {
     setOpenMenuId(null);
-    if (!confirm(`Delete batch "${b.name}"? All enrolled students will be unenrolled (not deleted). This cannot be undone.`)) return;
+    const ok = await confirm({ title: 'Delete Batch?', message: `Are you sure you want to delete "${b.name}"? All enrolled students will be unenrolled (not deleted). This cannot be undone.`, confirmLabel: 'Delete Batch', variant: 'danger' });
+    if (!ok) return;
     try {
       const res = await fetch(`/api/batches/${b.id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -136,7 +139,8 @@ export default function BatchManager({ userId }: { userId: string }) {
 
   const unenrollStudent = async (sid: string) => {
     if (!detail) return;
-    if (!confirm('Unenroll this student from the batch?')) return;
+    const ok = await confirm({ title: 'Unenroll Student?', message: 'This student will be removed from the batch but their account will remain active.', confirmLabel: 'Unenroll', variant: 'warning' });
+    if (!ok) return;
     setOpenMenuId(null);
     await fetch(`/api/batches/${detail.id}/enroll`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ studentId: sid }) });
     // Move student from enrolled → unenrolled locally (no network re-fetch)
@@ -173,7 +177,8 @@ export default function BatchManager({ userId }: { userId: string }) {
   };
 
   const deleteStudent = async (s: Student) => {
-    if (!confirm(`Permanently delete ${s.name}?`)) return;
+    const ok = await confirm({ title: 'Delete Student?', message: `Permanently delete ${s.name}? This removes all their data including test attempts and cannot be undone.`, confirmLabel: 'Delete Permanently', variant: 'danger' });
+    if (!ok) return;
     setOpenMenuId(null);
     await fetch(`/api/users/${s.id}`, { method: 'DELETE' });
     setUnenrolled(prev => prev.filter(u => u.id !== s.id));
