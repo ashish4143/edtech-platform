@@ -93,7 +93,11 @@ function infoRow(label: string, value: string): string {
 
 function getTransporter() {
   const { EMAIL_USER, EMAIL_PASS, EMAIL_HOST, EMAIL_PORT } = process.env;
+
+  console.log(`[MAILER] Config check — HOST: ${EMAIL_HOST || '(unset)'}, PORT: ${EMAIL_PORT || '(unset)'}, USER: ${EMAIL_USER || '(unset)'}, PASS: ${EMAIL_PASS ? '***set***' : '(unset)'}`);
+
   if (!EMAIL_USER || !EMAIL_PASS) return null;
+
   return nodemailer.createTransport({
     host: EMAIL_HOST || 'smtp.gmail.com',
     port: Number(EMAIL_PORT) || 587,
@@ -109,8 +113,8 @@ async function trySend(to: string, subject: string, html: string, label: string)
 
   const transporter = getTransporter();
   if (!transporter) {
-    console.log('✅ Simulation mode (no SMTP creds). Email logged to console.');
-    return { success: true, message: 'Simulated', messageId: `sim-${Date.now()}` };
+    console.log('⚠️ NO SMTP CREDENTIALS — running in simulation mode. Email NOT actually sent.');
+    return { success: true, message: 'Simulated (no SMTP creds)', messageId: `sim-${Date.now()}` };
   }
 
   for (let attempt = 1; attempt <= 3; attempt++) {
@@ -121,14 +125,15 @@ async function trySend(to: string, subject: string, html: string, label: string)
         subject,
         html,
       });
-      console.log(`✅ Sent (attempt ${attempt}). ID: ${info.messageId}`);
+      console.log(`✅ Email SENT (attempt ${attempt}). MessageID: ${info.messageId}`);
       return { success: true, message: 'Sent', messageId: info.messageId };
     } catch (err: any) {
-      console.error(`❌ Attempt ${attempt} failed:`, err.message);
+      console.error(`❌ SMTP attempt ${attempt} FAILED:`, err.message);
       if (attempt < 3) await new Promise(r => setTimeout(r, 1000 * attempt));
     }
   }
-  return { success: true, message: 'SMTP failed, logged to console', messageId: `fallback-${Date.now()}` };
+  console.error('❌ All 3 SMTP attempts failed. Email NOT delivered.');
+  return { success: false, message: 'SMTP failed after 3 attempts' };
 }
 
 // ── 1. Welcome / Credential Email ─────────────────────────────────────
