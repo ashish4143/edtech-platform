@@ -1,6 +1,6 @@
 'use strict';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
-import { Clock, Send, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Clock, Send, ChevronLeft, ChevronRight, AlertTriangle, X, ShieldCheck, Eye } from 'lucide-react';
 import { QuestionType } from '@prisma/client';
 
 // Simple hash to generate a seed from a string (attemptId)
@@ -55,6 +55,9 @@ export default function TestInterface({
   const [timeLeft, setTimeLeft] = useState(durationMins * 60);
   const [submitting, setSubmitting] = useState(false);
   const [tabWarnings, setTabWarnings] = useState(0);
+  const [agreed, setAgreed] = useState(false);
+  const [agreeChecked, setAgreeChecked] = useState(false);
+  const [showTabWarning, setShowTabWarning] = useState(false);
 
   // Deterministically shuffle questions and options based on the attemptId
   const questionsList = useMemo(() => {
@@ -97,15 +100,18 @@ export default function TestInterface({
   const q = currentItem?.question;
 
   useEffect(() => {
+    if (!agreed) return;
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setTabWarnings((count) => count + 1);
+        setShowTabWarning(true);
+        setTimeout(() => setShowTabWarning(false), 4000);
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+  }, [agreed]);
 
   const handleFinalSubmit = useCallback(async () => {
     if (submitting) return;
@@ -124,6 +130,7 @@ export default function TestInterface({
         body: JSON.stringify({
           attemptId,
           answers: payloadAnswers,
+          tabSwitchCount: tabWarnings,
         }),
       });
 
@@ -140,9 +147,9 @@ export default function TestInterface({
     } finally {
       setSubmitting(false);
     }
-  }, [answers, attemptId, onCancel, onFinishSubmit, submitting]);
+  }, [answers, attemptId, onCancel, onFinishSubmit, submitting, tabWarnings]);
 
-  // Countdown timer logic
+  // Countdown timer logic (only when agreed)
   useEffect(() => {
     if (timeLeft <= 0) {
       // Auto-submit instantly when countdown hits zero
@@ -181,8 +188,68 @@ export default function TestInterface({
 
   const [showSubmitModal, setShowSubmitModal] = useState(false);
 
+  // ─── Pre-test agreement gate ────────────────────────────────────────
+  if (!agreed) {
+    return (
+      <div className="fixed inset-0 z-[999] bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4">
+        <div className="max-w-lg w-full bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl p-8 space-y-6">
+          <div className="text-center space-y-2">
+            <div className="inline-flex p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+            <h1 className="text-xl font-bold text-white">Test Integrity Agreement</h1>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              Before starting this test, please read and agree to the following rules.
+            </p>
+          </div>
+
+          <div className="space-y-3 p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300">
+            <div className="flex items-start gap-2">
+              <Eye className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <p><strong className="text-white">Tab switching is monitored.</strong> Every time you switch tabs or minimize the browser, it will be recorded and visible to your teacher.</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <p><strong className="text-white">Do not use external resources.</strong> This is a closed-book assessment. Using another tab will be flagged as a violation.</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <Clock className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+              <p><strong className="text-white">Timer starts immediately.</strong> You have {durationMins} minutes to complete {questionsList.length} questions.</p>
+            </div>
+          </div>
+
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <input type="checkbox" checked={agreeChecked} onChange={e => setAgreeChecked(e.target.checked)}
+              className="w-4 h-4 text-indigo-600 rounded border-slate-600" />
+            <span className="text-xs text-slate-300 group-hover:text-white transition-colors">
+              I agree to follow the test integrity rules. I understand that tab switching will be tracked.
+            </span>
+          </label>
+
+          <button
+            onClick={() => setAgreed(true)}
+            disabled={!agreeChecked}
+            className="w-full py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold text-sm transition-all shadow-lg shadow-indigo-600/20"
+          >
+            I Agree — Start Test
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 flex flex-col z-50 animate-fadeIn">
+      {/* Tab Switch Warning Overlay */}
+      {showTabWarning && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none animate-fadeIn">
+          <div className="bg-red-600 text-white rounded-2xl px-8 py-5 shadow-2xl shadow-red-600/40 text-center space-y-2 pointer-events-auto border-2 border-red-400">
+            <AlertTriangle className="w-8 h-8 mx-auto" />
+            <p className="text-lg font-black">Tab Switching Detected!</p>
+            <p className="text-xs font-medium opacity-80">Your teacher will see this. Total switches: {tabWarnings}</p>
+          </div>
+        </div>
+      )}
       {/* Sticky Premium Topbar */}
       <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between shrink-0 shadow-sm">
         <div className="flex items-center gap-3">
@@ -400,6 +467,55 @@ export default function TestInterface({
           </div>
         </main>
       </div>
+
+      {/* Submit Confirmation Modal */}
+      {showSubmitModal && (
+        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full p-6 space-y-5">
+            <div className="text-center space-y-2">
+              <div className="inline-flex p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500">
+                <AlertTriangle className="w-7 h-7" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Confirm Submission</h2>
+              <p className="text-xs text-slate-500">Once submitted, you cannot modify your answers.</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-center">
+                <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 block">{attemptedCount}</span>
+                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Attempted</span>
+              </div>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center">
+                <span className="text-2xl font-black text-slate-500 block">{unattemptedCount}</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unattempted</span>
+              </div>
+            </div>
+
+            {unattemptedCount > 0 && (
+              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-medium text-center">
+                ⚠ You have {unattemptedCount} unanswered question{unattemptedCount > 1 ? 's' : ''}. Are you sure?
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowSubmitModal(false)}
+                className="flex-1 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                Go Back
+              </button>
+              <button
+                onClick={() => { setShowSubmitModal(false); handleFinalSubmit(); }}
+                disabled={submitting}
+                className="flex-1 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-bold text-xs transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+              >
+                <Send className="w-3.5 h-3.5" />
+                {submitting ? 'Submitting...' : 'Confirm Submit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

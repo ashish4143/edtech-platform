@@ -6,12 +6,23 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const q = searchParams.get('q')?.trim() || '';
+    const grade = searchParams.get('grade')?.trim() || '';
+    const unenrolled = searchParams.get('unenrolled') === 'true';
+
+    const where: any = { role: Role.Student };
+
+    if (q) {
+      where.name = { contains: q, mode: 'insensitive' };
+    }
+    if (grade) {
+      where.grade = grade;
+    }
+    if (unenrolled) {
+      where.batchEnrollments = { none: {} };
+    }
 
     const students = await prisma.user.findMany({
-      where: {
-        role: Role.Student,
-        ...(q ? { name: { contains: q, mode: 'insensitive' } } : {}),
-      },
+      where,
       select: {
         id: true,
         name: true,
@@ -21,12 +32,14 @@ export async function GET(req: Request) {
         board: true,
         createdAt: true,
         batchEnrollments: {
-          select: { batch: { select: { name: true, grade: true } } },
-          take: 1,
+          select: {
+            id: true,
+            batch: { select: { id: true, name: true, grade: true } },
+          },
         },
       },
       orderBy: { name: 'asc' },
-      take: 20,
+      take: 100,
     });
 
     return NextResponse.json({ students });

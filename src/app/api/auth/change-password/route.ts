@@ -6,8 +6,8 @@ export async function POST(request: Request) {
   try {
     const { userId, currentPassword, newPassword } = await request.json();
 
-    if (!userId || !currentPassword || !newPassword) {
-      return NextResponse.json({ error: 'userId, currentPassword and newPassword are required' }, { status: 400 });
+    if (!userId || !newPassword) {
+      return NextResponse.json({ error: 'userId and newPassword are required' }, { status: 400 });
     }
 
     if (newPassword.length < 6) {
@@ -17,8 +17,15 @@ export async function POST(request: Request) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!valid) return NextResponse.json({ error: 'Current password is incorrect' }, { status: 403 });
+    // If mustChangePassword is set, skip current password verification —
+    // the user already proved their identity by logging in with the temp password.
+    if (!user.mustChangePassword) {
+      if (!currentPassword) {
+        return NextResponse.json({ error: 'Current password is required' }, { status: 400 });
+      }
+      const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!valid) return NextResponse.json({ error: 'Current password is incorrect' }, { status: 403 });
+    }
 
     const newHash = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({

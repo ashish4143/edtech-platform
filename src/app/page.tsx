@@ -8,7 +8,7 @@ import TestWizard from '@/components/tests/TestWizard';
 import QuestionBank from '@/components/questions/QuestionBank';
 import StudentDashboard from '@/components/dashboard/StudentDashboard';
 import TestInterface from '@/components/tests/TestInterface';
-import StudentList from '@/components/dashboard/StudentList';
+import StudentManager from '@/components/dashboard/StudentManager';
 import LoginPage from '@/app/login/page';
 import PracticeHub from '@/components/practice/PracticeHub';
 import PracticeSession from '@/components/practice/PracticeSession';
@@ -19,6 +19,8 @@ import StudentProvisioning from '@/components/dashboard/StudentProvisioning';
 import BatchManager from '@/components/dashboard/BatchManager';
 import BatchPerformance from '@/components/analytics/BatchPerformance';
 import TeacherManager from '@/components/dashboard/TeacherManager';
+import QuickTestWizard from '@/components/tests/QuickTestWizard';
+import BatchResults from '@/components/dashboard/BatchResults';
 import { Role } from '@prisma/client';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 
@@ -189,7 +191,7 @@ export default function Home() {
           )}
 
           {activeTab === 'students' && (
-            <StudentList userRole={effectiveRole} />
+            <StudentManager />
           )}
 
           {activeTab === 'teachers' && effectiveRole === Role.Admin && (
@@ -208,15 +210,15 @@ export default function Home() {
             <BatchPerformance batches={batchList} />
           )}
 
-          {activeTab === 'create-test' && (
-            <div className="px-4">
-              <TestWizard 
-                onComplete={() => setActiveTab('tests')} 
-                onCancel={() => setActiveTab('dashboard')}
-                userId={resolvedUserId}
-              />
-            </div>
+          {activeTab === 'create-test' && (effectiveRole === Role.Admin || effectiveRole === Role.Teacher) && (
+            <QuickTestWizard userId={resolvedUserId} onComplete={() => setActiveTab('tests')} />
           )}
+
+          {activeTab === 'results' && (effectiveRole === Role.Admin || effectiveRole === Role.Teacher) && (
+            <BatchResults />
+          )}
+
+
 
           {activeTab === 'questions' && (
             <QuestionBank />

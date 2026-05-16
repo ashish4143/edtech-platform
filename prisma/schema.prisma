@@ -18,6 +18,7 @@ enum Difficulty {
   Easy
   Medium
   Hard
+  Olympiad
 }
 
 enum QuestionType {
@@ -97,6 +98,7 @@ model Test {
   totalMarks   Int             @map("total_marks")
   createdById  String          @map("created_by")
   status       TestStatus      @default(Draft)
+  expiresAt    DateTime?       @map("expires_at")
   createdAt    DateTime        @default(now()) @map("created_at")
 
   // Relations
@@ -131,6 +133,7 @@ model Attempt {
   endTime    DateTime?     @map("end_time")
   totalScore Float         @default(0) @map("total_score")
   status     AttemptStatus @default(In_Progress)
+  tabSwitchCount Int       @default(0) @map("tab_switch_count")
 
   // Relations
   test       Test          @relation(fields: [testId], references: [id], onDelete: Cascade)

@@ -14,7 +14,8 @@ import {
   Layers,
   UserPlus,
   Trophy,
-  Search
+  Search,
+  Zap
 } from 'lucide-react';
 import { Role } from '@prisma/client';
 
@@ -39,15 +40,14 @@ export default function Sidebar({
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     ...(userRole === Role.Admin ? [{ id: 'teachers', label: 'Teacher Management', icon: UserCircle }] : []),
     ...(isTeacherOrAdmin ? [{ id: 'provision', label: 'Provision Students', icon: UserPlus }] : []),
+    ...(isTeacherOrAdmin ? [{ id: 'students', label: 'Manage Students', icon: Search }] : []),
     ...(isTeacherOrAdmin ? [{ id: 'batches', label: 'Batches', icon: Layers }] : []),
     ...(isTeacherOrAdmin ? [{ id: 'questions', label: 'Question Bank', icon: Database }] : []),
+    ...(isTeacherOrAdmin ? [{ id: 'create-test', label: 'Create Test', icon: Zap }] : []),
     { id: 'tests', label: isTeacherOrAdmin ? 'Manage Tests' : 'Available Tests', icon: FileText },
-    ...(isTeacherOrAdmin ? [{ id: 'evaluate', label: 'Evaluation', icon: Activity }] : []),
-    ...(isTeacherOrAdmin ? [{ id: 'batch-performance', label: 'Batch Performance', icon: Trophy }] : []),
+    ...(isTeacherOrAdmin ? [{ id: 'results', label: 'Results', icon: Trophy }] : []),
     ...(!isTeacherOrAdmin ? [{ id: 'practice', label: 'Practice Mode', icon: Dumbbell }] : []),
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     ...(!isTeacherOrAdmin ? [{ id: 'profile', label: 'My Profile', icon: UserCircle2 }] : []),
-    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
 

@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { attemptId, answers } = body;
+    const { attemptId, answers, tabSwitchCount } = body;
 
     if (!attemptId || !Array.isArray(answers)) {
       return NextResponse.json({ error: 'Missing attemptId or invalid answers payload' }, { status: 400 });
@@ -107,6 +107,7 @@ export async function POST(request: Request) {
         endTime: new Date(),
         totalScore,
         status: finalStatus,
+        tabSwitchCount: typeof tabSwitchCount === 'number' ? tabSwitchCount : 0,
       },
     });
 

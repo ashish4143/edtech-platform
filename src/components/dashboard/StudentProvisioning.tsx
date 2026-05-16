@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { UserPlus, Upload, CheckCircle2, AlertCircle, Users, Copy, RefreshCw } from 'lucide-react';
+import { UserPlus, Upload, CheckCircle2, AlertCircle, Users, Copy, RefreshCw, Send } from 'lucide-react';
 
 interface ProvisionResult {
   name: string;
   email: string;
   tempPassword: string;
   status: string;
+  userId?: string;
 }
 
 interface BatchOption {
@@ -24,6 +25,8 @@ export default function StudentProvisioning({ userId }: { userId: string }) {
   const [results, setResults] = useState<ProvisionResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+  const [resendStatus, setResendStatus] = useState<Record<string, { text: string; type: 'success' | 'error' }>>({});
 
   // Single student form
   const [name, setName] = useState('');
@@ -93,6 +96,34 @@ export default function StudentProvisioning({ userId }: { userId: string }) {
     const created = results.filter(r => r.status === 'Created');
     const text = created.map(r => `${r.name} | ${r.email} | ${r.tempPassword}`).join('\n');
     navigator.clipboard.writeText(text);
+  };
+
+  const handleResendCredentials = async (email: string) => {
+    setResendingEmail(email);
+    try {
+      const res = await fetch('/api/admin/resend-credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        // Update the result row to show the new temp password
+        setResults(prev => prev.map(r =>
+          r.email === email
+            ? { ...r, tempPassword: data.tempPassword, status: 'Resent' }
+            : r
+        ));
+        setResendStatus(prev => ({ ...prev, [email]: { text: 'Sent!', type: 'success' } }));
+      } else {
+        setResendStatus(prev => ({ ...prev, [email]: { text: data.error || 'Failed', type: 'error' } }));
+      }
+    } catch {
+      setResendStatus(prev => ({ ...prev, [email]: { text: 'Network error', type: 'error' } }));
+    } finally {
+      setResendingEmail(null);
+      setTimeout(() => setResendStatus(prev => { const n = { ...prev }; delete n[email]; return n; }), 5000);
+    }
   };
 
   return (
@@ -220,15 +251,40 @@ export default function StudentProvisioning({ userId }: { userId: string }) {
                     <td className="py-2 pr-4 text-slate-600 dark:text-slate-400">{r.email}</td>
                     <td className="py-2 pr-4 font-mono text-indigo-600 dark:text-indigo-400 font-bold">{r.tempPassword || '—'}</td>
                     <td className="py-2">
-                      {r.status === 'Created' ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
-                          <CheckCircle2 className="w-3 h-3" /> Created
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
-                          <AlertCircle className="w-3 h-3" /> {r.status}
-                        </span>
-                      )}
+                      <div className="flex flex-col gap-1">
+                        {r.status === 'Created' || r.status === 'Resent' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
+                            <CheckCircle2 className="w-3 h-3" /> {r.status}
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
+                              <AlertCircle className="w-3 h-3" /> {r.status}
+                            </span>
+                            {r.status === 'Skipped — email already exists' && (
+                              <button
+                                onClick={() => handleResendCredentials(r.email)}
+                                disabled={resendingEmail === r.email}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-[10px] font-bold transition-colors"
+                              >
+                                {resendingEmail === r.email ? (
+                                  <RefreshCw className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Send className="w-3 h-3" />
+                                )}
+                                {resendingEmail === r.email ? 'Sending...' : 'Resend Credentials'}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {resendStatus[r.email] && (
+                          <span className={`text-[10px] font-bold ${
+                            resendStatus[r.email].type === 'success' ? 'text-emerald-500' : 'text-red-500'
+                          }`}>
+                            {resendStatus[r.email].text}
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
