@@ -322,13 +322,10 @@ export default function Home() {
 
           {activeTab === 'settings' && (
             <div className="max-w-4xl mx-auto p-6 space-y-4">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Platform Credentials Reference</h2>
-              <div className="p-5 rounded-xl bg-slate-900 text-slate-300 space-y-2 text-xs font-mono">
-                <p className="text-indigo-400 font-bold font-sans">Provisioned Logins Seeded Database:</p>
-                <p>1. Ashish Shaw (Admin) — <span className="text-white font-bold">ashish@admin.com</span> | Pass: <span className="text-white font-bold">admin123</span></p>
-                <p>2. Dilip Shah (Admin) — <span className="text-white font-bold">dilip@admin.com</span> | Pass: <span className="text-white font-bold">admin123</span></p>
-                <p>3. Amit Patel (Student) — <span className="text-white font-bold">student1@edtech.com</span> | Pass: <span className="text-white font-bold">student123</span></p>
-                <p>4. Priya Sharma (Student) — <span className="text-white font-bold">student2@edtech.com</span> | Pass: <span className="text-white font-bold">student123</span></p>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Platform Settings</h2>
+              <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm text-slate-500 dark:text-slate-400 space-y-3">
+                <p>Platform settings and configuration are managed by the system administrator.</p>
+                <p className="text-xs text-slate-400">For account-related queries, please contact your institute admin.</p>
               </div>
             </div>
           )}

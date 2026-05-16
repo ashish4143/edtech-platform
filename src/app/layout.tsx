@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NovaLearn | Interactive Assessment Platform",
-  description: "A complete learning and assessment ecosystem for modern coaching institutes.",
+  title: "BuzzyBrains | Interactive Learning & Assessment Platform",
+  description: "Empowering students in classes 7-12 with engaging, NCERT-aligned assessments and real-time analytics.",
 };
 
 export default function RootLayout({

@@ -17,7 +17,7 @@ export default function RegisterPage() {
         </div>
 
         <h1 className="text-2xl font-bold tracking-tight text-white">
-          Student Portal
+          <span className="text-amber-400">Buzzy</span>Brains Student Portal
         </h1>
 
         <div className="space-y-3 text-sm text-slate-400 leading-relaxed">
@@ -39,13 +39,13 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <Link
+        <a
           href="/login"
-          className="w-full mt-2 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/20"
+          className="w-full mt-2 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-500/20"
         >
           Go to Login Portal
           <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
+        </a>
 
         <p className="text-[10px] text-slate-600 pt-2">
           For admin access, contact the platform owner.

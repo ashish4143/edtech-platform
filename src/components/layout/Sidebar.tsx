@@ -5,7 +5,6 @@ import {
   Database, 
   FileText, 
   BarChart3, 
-  Settings, 
   LogOut, 
   UserCircle,
   Dumbbell,
@@ -55,10 +54,12 @@ export default function Sidebar({
     <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen shrink-0 shadow-xl border-r border-slate-800">
       {/* Brand Header */}
       <div className="p-5 border-b border-slate-800 flex items-center gap-3">
-        <img src="/logo.png" alt="NovaLearn Logo" className="w-10 h-10 object-contain rounded-xl shadow-md shadow-indigo-500/20" />
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-md shadow-amber-500/20">
+          <span className="text-slate-950 font-extrabold text-sm">BB</span>
+        </div>
         <div>
-          <h1 className="font-bold text-white tracking-wide text-sm">NovaLearn</h1>
-          <span className="text-[10px] text-indigo-400 font-semibold tracking-wider uppercase px-1.5 py-0.5 bg-indigo-950/60 rounded border border-indigo-800/40">
+          <h1 className="font-bold text-white tracking-wide text-sm"><span className="text-amber-400">Buzzy</span>Brains</h1>
+          <span className="text-[10px] text-amber-400/80 font-semibold tracking-wider uppercase px-1.5 py-0.5 bg-amber-950/40 rounded border border-amber-800/30">
             {userRole} Portal
           </span>
         </div>
