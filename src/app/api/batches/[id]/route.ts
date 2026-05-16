@@ -55,10 +55,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    await prisma.batch.update({ where: { id }, data: { isActive: false } });
-    return NextResponse.json({ message: 'Batch deactivated' });
+    // Cascade deletes enrollments + dispatches (students are NOT deleted, just unenrolled)
+    await prisma.batch.delete({ where: { id } });
+    return NextResponse.json({ message: 'Batch deleted successfully' });
   } catch (error: any) {
-    console.error('Deactivate batch error:', error);
-    return NextResponse.json({ error: 'Failed to deactivate batch' }, { status: 500 });
+    console.error('Delete batch error:', error);
+    return NextResponse.json({ error: 'Failed to delete batch' }, { status: 500 });
   }
 }

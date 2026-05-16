@@ -44,6 +44,11 @@ export default function BatchManager({ userId }: { userId: string }) {
   const [actionMsg, setActionMsg] = useState<Record<string, string>>({});
   const unenrolledFetchedGrade = useRef('');
 
+  // Batch-level edit/delete
+  const [editBatch, setEditBatch] = useState<Batch | null>(null);
+  const [editBatchName, setEditBatchName] = useState('');
+  const [editBatchLoading, setEditBatchLoading] = useState(false);
+
   const load = useCallback(async () => {
     setLoading(true);
     try { const r = await fetch('/api/batches'); const d = await r.json(); setBatches(d.batches || []); } catch {}
@@ -84,6 +89,49 @@ export default function BatchManager({ userId }: { userId: string }) {
     e.preventDefault();
     await fetch('/api/batches', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName, grade: newGrade, board: 'CBSE', description: newDesc || null, createdById: userId }) });
     setShowCreate(false); setNewName(''); setNewDesc(''); load();
+  };
+
+  // ── Batch Rename ──
+  const openBatchEditModal = (b: Batch) => {
+    setOpenMenuId(null);
+    setEditBatch(b);
+    setEditBatchName(b.name);
+  };
+
+  const handleBatchRename = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editBatch) return;
+    setEditBatchLoading(true);
+    try {
+      const res = await fetch(`/api/batches/${editBatch.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editBatchName }),
+      });
+      if (res.ok) {
+        setEditBatch(null);
+        // If we're inside the detail view, update it too
+        if (detail && detail.id === editBatch.id) {
+          setDetail(prev => prev ? { ...prev, name: editBatchName } : null);
+        }
+        load();
+      }
+    } catch {}
+    setEditBatchLoading(false);
+  };
+
+  // ── Batch Delete ──
+  const handleBatchDelete = async (b: Batch) => {
+    setOpenMenuId(null);
+    if (!confirm(`Delete batch "${b.name}"? All enrolled students will be unenrolled (not deleted). This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/batches/${b.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        // If we're viewing this batch's detail, go back
+        if (detail && detail.id === b.id) setDetail(null);
+        load();
+      }
+    } catch {}
   };
 
   const unenrollStudent = async (sid: string) => {
@@ -180,7 +228,20 @@ export default function BatchManager({ userId }: { userId: string }) {
         <button onClick={() => setDetail(null)} className="text-xs text-indigo-500 hover:text-indigo-400 font-bold">← Back to batches</button>
         <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-800 text-white shadow-xl flex items-center justify-between">
           <div><h2 className="text-xl font-bold">{detail.name}</h2><p className="text-indigo-200 text-xs mt-1">Class {detail.grade}</p>{detail.description && <p className="text-indigo-100 text-xs mt-2">{detail.description}</p>}</div>
-          <div className="text-right"><p className="text-3xl font-bold">{detail.enrollments.length}</p><p className="text-indigo-200 text-xs">Students</p></div>
+          <div className="flex items-center gap-4">
+            <div className="text-right"><p className="text-3xl font-bold">{detail.enrollments.length}</p><p className="text-indigo-200 text-xs">Students</p></div>
+            <div className="relative">
+              <button onClick={() => setOpenMenuId(openMenuId === `batch-detail` ? null : `batch-detail`)} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                <MoreVertical className="w-5 h-5" />
+              </button>
+              {openMenuId === `batch-detail` && (
+                <div className="absolute right-0 top-10 z-20 w-44 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl py-1 text-[11px]">
+                  <button onClick={() => { setOpenMenuId(null); setEditBatch({ id: detail.id, name: detail.name, grade: detail.grade, board: detail.board, isActive: true, createdBy: { name: '' }, _count: { enrollments: detail.enrollments.length, dispatches: detail.dispatches.length } }); setEditBatchName(detail.name); }} className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 text-slate-700 dark:text-slate-300"><Pencil className="w-3 h-3" /> Edit Name</button>
+                  <button onClick={() => handleBatchDelete({ id: detail.id, name: detail.name, grade: detail.grade, board: detail.board, isActive: true, createdBy: { name: '' }, _count: { enrollments: detail.enrollments.length, dispatches: detail.dispatches.length } })} className="w-full px-3 py-2 text-left hover:bg-red-50 dark:hover:bg-red-950 flex items-center gap-2 text-red-500"><Trash2 className="w-3 h-3" /> Delete Batch</button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Targeted Dispatch */}
@@ -351,18 +412,31 @@ export default function BatchManager({ userId }: { userId: string }) {
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Class {g}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {batches.filter(b => b.grade === g).map(b => (
-                  <button key={b.id} onClick={() => openBatch(b.id)} className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-indigo-500/50 transition-all text-left group">
+                  <div key={b.id} className="relative p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-indigo-500/50 transition-all text-left group">
                     <div className="flex items-start justify-between mb-3">
                       <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform"><Layers className="w-5 h-5" /></div>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${b.isActive ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{b.isActive ? 'Active' : 'Inactive'}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${b.isActive ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{b.isActive ? 'Active' : 'Inactive'}</span>
+                        <button onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === `batch-${b.id}` ? null : `batch-${b.id}`); }} className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                          <MoreVertical className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">{b.name}</h3>
-                    <p className="text-xs text-slate-500 mt-1">Class {b.grade}</p>
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                      <span className="text-xs text-slate-500 flex items-center gap-1"><Users className="w-3 h-3" /> {b._count.enrollments} students</span>
-                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-all" />
-                    </div>
-                  </button>
+                    {openMenuId === `batch-${b.id}` && (
+                      <div className="absolute right-4 top-14 z-20 w-44 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl py-1 text-[11px]">
+                        <button onClick={(e) => { e.stopPropagation(); openBatchEditModal(b); }} className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 text-slate-700 dark:text-slate-300"><Pencil className="w-3 h-3" /> Edit Name</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleBatchDelete(b); }} className="w-full px-3 py-2 text-left hover:bg-red-50 dark:hover:bg-red-950 flex items-center gap-2 text-red-500"><Trash2 className="w-3 h-3" /> Delete Batch</button>
+                      </div>
+                    )}
+                    <button onClick={() => openBatch(b.id)} className="w-full text-left">
+                      <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">{b.name}</h3>
+                      <p className="text-xs text-slate-500 mt-1">Class {b.grade}</p>
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                        <span className="text-xs text-slate-500 flex items-center gap-1"><Users className="w-3 h-3" /> {b._count.enrollments} students</span>
+                        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-all" />
+                      </div>
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -397,6 +471,27 @@ export default function BatchManager({ userId }: { userId: string }) {
           </form>
         </div>
       )}
+
+      {/* Batch Edit/Rename Modal */}
+      {editBatch && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <form onSubmit={handleBatchRename} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 w-full max-w-md space-y-4">
+            <div className="flex items-center justify-between"><h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2"><Pencil className="w-4 h-4 text-indigo-500" /> Rename Batch</h3><button type="button" onClick={() => setEditBatch(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Batch Name</label>
+              <input type="text" placeholder="e.g. Aspire" value={editBatchName} onChange={e => setEditBatchName(e.target.value)} required className="w-full py-2 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white" />
+            </div>
+            <p className="text-[10px] text-slate-400">Batch: <strong>{editBatch.name}</strong> • Class {editBatch.grade}</p>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setEditBatch(null)} className="flex-1 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800">Cancel</button>
+              <button type="submit" disabled={editBatchLoading || !editBatchName.trim()} className="flex-1 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold shadow-md">{editBatchLoading ? 'Saving...' : 'Save'}</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Close menus on outside click */}
+      {openMenuId?.startsWith('batch-') && <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />}
     </div>
   );
 }
