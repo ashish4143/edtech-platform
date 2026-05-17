@@ -1,9 +1,10 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Zap, ChevronRight, ChevronLeft, AlertCircle, CheckCircle2, RefreshCw, Layers, BookOpen, Clock, Target, Timer, Send } from 'lucide-react';
+import { Zap, ChevronRight, ChevronLeft, AlertCircle, CheckCircle2, RefreshCw, Layers, BookOpen, Clock, Target, Timer, Send, Shuffle } from 'lucide-react';
 
 interface BatchOpt { id: string; name: string; grade: string; _count: { enrollments: number }; }
 interface SubjectInfo { name: string; total: number; counts: Record<string, number>; }
+interface ChapterInfo { name: string; total: number; counts: Record<string, number>; }
 interface QuestionItem { id: string; content: string; topic: string; chapter: string | null; difficulty: string; }
 
 const GRADES = ['7','8','9','10','11','12'];
@@ -17,7 +18,7 @@ const BUFFER_OPTIONS = [
 ];
 
 export default function QuickTestWizard({ userId, onComplete }: { userId: string; onComplete: () => void }) {
-  // Fixed steps: 1-Class, 2-Batch, 3-Subject, 4-Duration, 5-Counts
+  // Fixed steps: 1-Class, 2-Batch, 3-Subject, 4-Chapter, 5-Duration, 6-Counts
   // Dynamic: one picker step per non-zero difficulty
   // Then: Expiration, Review
   const [step, setStep] = useState(1);
@@ -28,6 +29,10 @@ export default function QuickTestWizard({ userId, onComplete }: { userId: string
   const [subjects, setSubjects] = useState<SubjectInfo[]>([]);
   const [subject, setSubject] = useState('');
   const [subjectsLoading, setSubjectsLoading] = useState(false);
+  const [chapters, setChapters] = useState<ChapterInfo[]>([]);
+  const [selectedChapters, setSelectedChapters] = useState<string[]>([]);
+  const [chaptersLoading, setChaptersLoading] = useState(false);
+  const [isMixPractice, setIsMixPractice] = useState(false);
   const [durationMins, setDurationMins] = useState(30);
   const [diffCounts, setDiffCounts] = useState({ Easy: 0, Medium: 0, Hard: 0, Olympiad: 0 });
   const [bufferMins, setBufferMins] = useState(60);
@@ -43,20 +48,27 @@ export default function QuickTestWizard({ userId, onComplete }: { userId: string
 
   // Compute which difficulties have questions to pick
   const activeDiffs = DIFF_KEYS.filter(k => diffCounts[k] > 0);
-  // Total steps: 5 fixed + activeDiffs.length pickers + 2 (expiration + review)
-  const totalSteps = 5 + activeDiffs.length + 2;
+  // Total steps: 6 fixed + activeDiffs.length pickers + 2 (expiration + review)
+  const totalSteps = 6 + activeDiffs.length + 2;
+
+  // Compute chapter-scoped availability for the counts step
+  const chapterScopedCounts: Record<string, number> = { Easy: 0, Medium: 0, Hard: 0, Olympiad: 0 };
+  if (selectedChapters.length > 0) {
+    for (const ch of chapters.filter(c => selectedChapters.includes(c.name))) {
+      for (const k of DIFF_KEYS) chapterScopedCounts[k] += (ch.counts[k] || 0);
+    }
+  }
 
   // Map step number to what it shows
   const getStepType = (s: number): { type: string; diff?: string } => {
-    if (s <= 5) return { type: ['class','batch','subject','duration','counts'][s-1] };
-    const pickerIdx = s - 6;
+    if (s <= 6) return { type: ['class','batch','subject','chapter','duration','counts'][s-1] };
+    const pickerIdx = s - 7;
     if (pickerIdx < activeDiffs.length) return { type: 'picker', diff: activeDiffs[pickerIdx] };
-    const afterPickers = s - 6 - activeDiffs.length;
+    const afterPickers = s - 7 - activeDiffs.length;
     return { type: afterPickers === 0 ? 'expiration' : 'review' };
   };
 
   const currentStep = getStepType(step);
-  const selectedSubject = subjects.find(s => s.name === subject);
 
   // Fetch batches
   useEffect(() => {
@@ -79,20 +91,33 @@ export default function QuickTestWizard({ userId, onComplete }: { userId: string
     })();
   }, [grade]);
 
+  // Fetch chapters when grade+subject are set
+  useEffect(() => {
+    if (!grade || !subject) { setChapters([]); setSelectedChapters([]); return; }
+    setChaptersLoading(true);
+    (async () => {
+      const r = await fetch(`/api/questions/chapters?grade=${grade}&subject=${subject}`); const d = await r.json();
+      setChapters(d.chapters || []); setSelectedChapters([]); setIsMixPractice(false);
+      setChaptersLoading(false);
+    })();
+  }, [grade, subject]);
+
   // Auto title
   useEffect(() => { if (grade && subject) setTitle(`Class ${grade} ${subject} Test`); }, [grade, subject]);
 
-  // Fetch questions when entering a picker step
+  // Fetch questions when entering a picker step (scoped by selected chapters)
   useEffect(() => {
     if (currentStep.type !== 'picker' || !currentStep.diff) return;
     setPickerLoading(true);
     (async () => {
-      const r = await fetch(`/api/questions?grade=${grade}&subject=${subject}&difficulty=${currentStep.diff}`);
+      let url = `/api/questions?grade=${grade}&subject=${subject}&difficulty=${currentStep.diff}`;
+      if (selectedChapters.length > 0) url += `&chapter=${encodeURIComponent(selectedChapters.join(','))}`;
+      const r = await fetch(url);
       const d = await r.json();
       setPickerQuestions(d.questions || []);
       setPickerLoading(false);
     })();
-  }, [step, currentStep.type, currentStep.diff, grade, subject]);
+  }, [step, currentStep.type, currentStep.diff, grade, subject, selectedChapters]);
 
   const toggleQuestion = (qId: string, diff: string) => {
     setSelectedIds(prev => {
@@ -103,9 +128,9 @@ export default function QuickTestWizard({ userId, onComplete }: { userId: string
 
   // Validation
   const countErrors: Record<string, string> = {};
-  if (selectedSubject) {
+  if (selectedChapters.length > 0) {
     for (const k of DIFF_KEYS) {
-      const avail = selectedSubject.counts[k] || 0;
+      const avail = chapterScopedCounts[k] || 0;
       if (diffCounts[k] > avail) countErrors[k] = `Only ${avail} available`;
     }
   }
@@ -116,6 +141,7 @@ export default function QuickTestWizard({ userId, onComplete }: { userId: string
       case 'class': return !!grade;
       case 'batch': return !!batchId;
       case 'subject': return !!subject;
+      case 'chapter': return selectedChapters.length > 0;
       case 'duration': return durationMins > 0;
       case 'counts': return totalQ > 0 && Object.keys(countErrors).length === 0;
       case 'picker': return currentStep.diff ? (selectedIds[currentStep.diff]?.length || 0) === diffCounts[currentStep.diff as keyof typeof diffCounts] : false;
@@ -199,6 +225,46 @@ export default function QuickTestWizard({ userId, onComplete }: { userId: string
           </div>
         )}
 
+        {/* Step: Chapter */}
+        {currentStep.type === 'chapter' && (
+          <div className="space-y-3">
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2"><BookOpen className="w-4 h-4 text-indigo-500" /> Select Chapter(s)</label>
+            <p className="text-[11px] text-slate-400">Pick specific chapters or enable Mix Practice to include all chapters.</p>
+            {/* Mix Practice toggle */}
+            <button onClick={() => { const next = !isMixPractice; setIsMixPractice(next); setSelectedChapters(next ? chapters.map(c => c.name) : []); }}
+              className={`w-full p-3 rounded-lg text-left border-2 transition-all flex items-center gap-3 ${isMixPractice ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40' : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300'}`}>
+              <Shuffle className={`w-4 h-4 ${isMixPractice ? 'text-indigo-600' : 'text-slate-400'}`} />
+              <div><span className="font-bold text-sm text-slate-900 dark:text-slate-100">Mix Practice (All Chapters)</span>
+              <p className="text-[10px] text-slate-400 mt-0.5">Questions from every chapter combined</p></div>
+              {isMixPractice && <CheckCircle2 className="w-4 h-4 text-indigo-600 ml-auto" />}
+            </button>
+            {!isMixPractice && (
+              chaptersLoading ? <p className="text-xs text-slate-400 flex items-center gap-2 py-2"><RefreshCw className="w-3 h-3 animate-spin" /> Loading chapters...</p>
+              : chapters.length === 0 ? <p className="text-xs text-amber-500 py-4 text-center">No chapters found for {subject} Class {grade}.</p>
+              : <div className="max-h-[320px] overflow-y-auto space-y-1.5 pr-1">{chapters.map(ch => {
+                  const isSel = selectedChapters.includes(ch.name);
+                  return (
+                    <button key={ch.name} onClick={() => setSelectedChapters(prev => isSel ? prev.filter(c => c !== ch.name) : [...prev, ch.name])}
+                      className={`w-full p-3 rounded-lg text-left border-2 transition-all flex items-center gap-3 ${isSel ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40' : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300'}`}>
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${isSel ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 dark:border-slate-600'}`}>
+                        {isSel && <CheckCircle2 className="w-3 h-3 text-white" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{ch.name}</span>
+                        <p className="text-[10px] text-slate-400 mt-0.5">E:{ch.counts.Easy || 0} M:{ch.counts.Medium || 0} H:{ch.counts.Hard || 0} O:{ch.counts.Olympiad || 0} — {ch.total} total</p>
+                      </div>
+                    </button>
+                  );
+                })}</div>
+            )}
+            {selectedChapters.length > 0 && (
+              <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-center text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                {selectedChapters.length} chapter{selectedChapters.length > 1 ? 's' : ''} selected
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Step: Duration */}
         {currentStep.type === 'duration' && (
           <div className="space-y-4">
@@ -214,7 +280,7 @@ export default function QuickTestWizard({ userId, onComplete }: { userId: string
             <p className="text-[11px] text-slate-400">Enter how many questions you want from each difficulty level.</p>
             <div className="space-y-3">
               {DIFF_KEYS.map(key => {
-                const avail = selectedSubject?.counts[key] || 0;
+                const avail = chapterScopedCounts[key] || 0;
                 const hasErr = !!countErrors[key];
                 return (
                   <div key={key} className="space-y-1">
@@ -300,6 +366,7 @@ export default function QuickTestWizard({ userId, onComplete }: { userId: string
               <div className="flex justify-between"><span className="text-slate-500">Class</span><span className="font-bold text-slate-900 dark:text-white">{grade}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Batch</span><span className="font-bold text-slate-900 dark:text-white">{batches.find(b => b.id === batchId)?.name}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Subject</span><span className="font-bold text-slate-900 dark:text-white">{subject}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Chapters</span><span className="font-bold text-slate-900 dark:text-white text-right max-w-[200px] truncate">{isMixPractice ? 'Mix Practice (All)' : selectedChapters.join(', ')}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Questions</span><span className="font-bold text-slate-900 dark:text-white">{totalQ} ({totalQ * 5} marks)</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Breakdown</span><span className="font-bold text-slate-900 dark:text-white">E:{diffCounts.Easy} M:{diffCounts.Medium} H:{diffCounts.Hard} O:{diffCounts.Olympiad}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Duration</span><span className="font-bold text-slate-900 dark:text-white">{durationMins} min</span></div>

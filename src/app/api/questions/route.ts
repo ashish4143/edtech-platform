@@ -10,6 +10,7 @@ export async function GET(request: Request) {
     const subject = searchParams.get('subject');
     const topic = searchParams.get('topic');
     const difficulty = searchParams.get('difficulty') as Difficulty | null;
+    const chapter = searchParams.get('chapter');
 
     const filter: any = {};
 
@@ -19,6 +20,12 @@ export async function GET(request: Request) {
     if (topic) filter.topic = { contains: topic, mode: 'insensitive' };
     if (difficulty && Object.values(Difficulty).includes(difficulty)) {
       filter.difficulty = difficulty;
+    }
+    if (chapter) {
+      const chapters = chapter.split(',').map(c => c.trim()).filter(Boolean);
+      if (chapters.length > 0) {
+        filter.chapter = { in: chapters };
+      }
     }
 
     const questions = await prisma.question.findMany({
