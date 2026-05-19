@@ -6,6 +6,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import TeacherDashboard from '@/components/dashboard/TeacherDashboard';
 import TestWizard from '@/components/tests/TestWizard';
 import QuestionBank from '@/components/questions/QuestionBank';
+import AISeeder from '@/components/admin/AISeeder';
 import StudentDashboard from '@/components/dashboard/StudentDashboard';
 import TestInterface from '@/components/tests/TestInterface';
 import StudentManager from '@/components/dashboard/StudentManager';
@@ -224,6 +225,10 @@ export default function Home() {
 
           {activeTab === 'questions' && (
             <QuestionBank />
+          )}
+
+          {activeTab === 'ai-seeder' && (effectiveRole === Role.Admin || effectiveRole === Role.Teacher) && (
+            <AISeeder />
           )}
 
           {activeTab === 'tests' && (

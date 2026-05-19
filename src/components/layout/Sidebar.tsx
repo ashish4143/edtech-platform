@@ -14,7 +14,8 @@ import {
   UserPlus,
   Trophy,
   Search,
-  Zap
+  Zap,
+  Bot
 } from 'lucide-react';
 import { Role } from '@prisma/client';
 
@@ -42,6 +43,7 @@ export default function Sidebar({
     ...(isTeacherOrAdmin ? [{ id: 'students', label: 'Manage Students', icon: Search }] : []),
     ...(isTeacherOrAdmin ? [{ id: 'batches', label: 'Batches', icon: Layers }] : []),
     ...(isTeacherOrAdmin ? [{ id: 'questions', label: 'Question Bank', icon: Database }] : []),
+    ...(isTeacherOrAdmin ? [{ id: 'ai-seeder', label: 'AI Seeder', icon: Bot }] : []),
     ...(isTeacherOrAdmin ? [{ id: 'create-test', label: 'Create Test', icon: Zap }] : []),
     { id: 'tests', label: isTeacherOrAdmin ? 'Manage Tests' : 'Available Tests', icon: FileText },
     ...(isTeacherOrAdmin ? [{ id: 'results', label: 'Results', icon: Trophy }] : []),

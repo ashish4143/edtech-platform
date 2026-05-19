@@ -15,12 +15,14 @@ export async function POST(request: Request) {
       board: q.board || 'CBSE',
       grade: q.grade || '10',
       subject: q.subject || 'General',
+      chapter: q.chapter || null,
       topic: q.topic || 'General',
       difficulty: q.difficulty || 'Medium',
       type: q.type || 'MCQ',
       content: q.content,
       options: q.options || null,
       correctAnswer: q.correctAnswer || null,
+      explanation: q.explanation || null,
       tags: Array.isArray(q.tags) ? q.tags : [],
     })).filter((q: any) => q.content);
 
