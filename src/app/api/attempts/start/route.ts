@@ -48,6 +48,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Test not found' }, { status: 404 });
     }
 
+    if (test.expiresAt && test.expiresAt < new Date()) {
+      return NextResponse.json({ error: 'This test has expired and is no longer available.' }, { status: 403 });
+    }
+
     // CHECK GATE: Ensure the student has an active assignment for this test
     // This allows the Admin to trigger re-tests simply by dispatching the test again, creating a new assignment.
     const assignment = await prisma.testAssignment.findUnique({

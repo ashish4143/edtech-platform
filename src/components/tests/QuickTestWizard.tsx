@@ -1,11 +1,11 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Zap, ChevronRight, ChevronLeft, AlertCircle, CheckCircle2, RefreshCw, Layers, BookOpen, Clock, Target, Timer, Send, Shuffle } from 'lucide-react';
+import { Zap, ChevronRight, ChevronLeft, AlertCircle, CheckCircle2, RefreshCw, Layers, BookOpen, Clock, Target, Timer, Send, Shuffle, ChevronDown, X } from 'lucide-react';
 
 interface BatchOpt { id: string; name: string; grade: string; _count: { enrollments: number }; }
 interface SubjectInfo { name: string; total: number; counts: Record<string, number>; }
 interface ChapterInfo { name: string; total: number; counts: Record<string, number>; }
-interface QuestionItem { id: string; content: string; topic: string; chapter: string | null; difficulty: string; }
+interface QuestionItem { id: string; content: string; topic: string; chapter: string | null; difficulty: string; options: string[] | null; correctAnswer: string | null; }
 
 const GRADES = ['7','8','9','10','11','12'];
 const DIFF_KEYS = ['Easy','Medium','Hard','Olympiad'] as const;
@@ -35,6 +35,7 @@ export default function QuickTestWizard({ userId, onComplete }: { userId: string
   const [isMixPractice, setIsMixPractice] = useState(false);
   const [durationMins, setDurationMins] = useState(30);
   const [diffCounts, setDiffCounts] = useState({ Easy: 0, Medium: 0, Hard: 0, Olympiad: 0 });
+  const [customCountMode, setCustomCountMode] = useState<Record<string, boolean>>({});
   const [bufferMins, setBufferMins] = useState(60);
   const [title, setTitle] = useState('');
 
@@ -268,8 +269,21 @@ export default function QuickTestWizard({ userId, onComplete }: { userId: string
         {/* Step: Duration */}
         {currentStep.type === 'duration' && (
           <div className="space-y-4">
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2"><Clock className="w-4 h-4 text-indigo-500" /> Duration (minutes)</label>
-            <input type="number" min={5} max={180} value={durationMins} onChange={e => setDurationMins(Number(e.target.value))} className="w-full p-3 rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-sm font-bold focus:outline-none focus:border-indigo-500" />
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2"><Clock className="w-4 h-4 text-indigo-500" /> Test Duration</label>
+            <div className="relative">
+              <select value={durationMins} onChange={e => setDurationMins(Number(e.target.value))}
+                className="w-full p-3 pr-10 rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-sm font-bold focus:outline-none focus:border-indigo-500 cursor-pointer appearance-none">
+                <option value={15}>15 minutes</option>
+                <option value={30}>30 minutes</option>
+                <option value={45}>45 minutes</option>
+                <option value={60}>1 hour</option>
+                <option value={75}>1 hour 15 minutes</option>
+                <option value={90}>1 hour 30 minutes</option>
+                <option value={105}>1 hour 45 minutes</option>
+                <option value={120}>2 hours</option>
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            </div>
           </div>
         )}
 
@@ -288,8 +302,47 @@ export default function QuickTestWizard({ userId, onComplete }: { userId: string
                       <label className="text-xs font-bold text-slate-600 dark:text-slate-400">{key}</label>
                       <span className="text-[10px] text-slate-400">{avail} available</span>
                     </div>
-                    <input type="number" min={0} max={avail} value={diffCounts[key]} onChange={e => setDiffCounts(prev => ({ ...prev, [key]: Math.max(0, Number(e.target.value)) }))}
-                      className={`w-full p-2.5 rounded-lg border-2 text-sm font-bold focus:outline-none ${hasErr ? 'border-red-500 bg-red-50 dark:bg-red-950/30 text-red-600 focus:border-red-500' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:border-indigo-500'}`} />
+                    {customCountMode[key] ? (
+                      <div className="flex items-center gap-2">
+                        <input type="number" min={0} max={avail} value={diffCounts[key]} onChange={e => setDiffCounts(prev => ({ ...prev, [key]: Math.max(0, Number(e.target.value)) }))}
+                          className={`flex-1 p-2.5 rounded-lg border-2 text-sm font-bold focus:outline-none ${hasErr ? 'border-red-500 bg-red-50 dark:bg-red-950/30 text-red-600 focus:border-red-500' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:border-indigo-500'}`} />
+                        <button type="button" onClick={() => {
+                          setCustomCountMode(prev => ({ ...prev, [key]: false }));
+                          setDiffCounts(prev => ({ ...prev, [key]: 0 }));
+                        }} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (() => {
+                      const stepSize = avail >= 10 ? 5 : 2;
+                      const opts = [0];
+                      if (avail > 0) {
+                        for (let i = stepSize; i <= avail; i += stepSize) {
+                          opts.push(i);
+                        }
+                        // If the exact max isn't already there and user might want it
+                        if (opts[opts.length - 1] !== avail && avail < 10) opts.push(avail);
+                      }
+                      const currentValue = opts.includes(diffCounts[key]) ? diffCounts[key].toString() : 'custom';
+                      
+                      return (
+                        <div className="relative">
+                          <select value={currentValue} 
+                            onChange={e => {
+                              if (e.target.value === 'custom') {
+                                setCustomCountMode(prev => ({ ...prev, [key]: true }));
+                              } else {
+                                setDiffCounts(prev => ({ ...prev, [key]: Number(e.target.value) }));
+                              }
+                            }}
+                            className={`w-full p-2.5 pr-10 rounded-lg border-2 text-sm font-bold focus:outline-none appearance-none cursor-pointer ${hasErr ? 'border-red-500 bg-red-50 dark:bg-red-950/30 text-red-600 focus:border-red-500' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:border-indigo-500'}`}>
+                            {opts.map(opt => <option key={opt} value={opt}>{opt === 0 ? '0 (None)' : opt}</option>)}
+                            <option value="custom">Custom...</option>
+                          </select>
+                          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+                      );
+                    })()}
                     {hasErr && <p className="text-[10px] text-red-500 font-bold flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {countErrors[key]}</p>}
                   </div>
                 );
@@ -328,8 +381,26 @@ export default function QuickTestWizard({ userId, onComplete }: { userId: string
                           {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-slate-900 dark:text-slate-100 line-clamp-2">{q.content}</p>
+                          <p className="text-xs font-medium text-slate-900 dark:text-slate-100">{q.content}</p>
                           <p className="text-[10px] text-slate-400 mt-1">{q.topic}{q.chapter ? ` • ${q.chapter}` : ''}</p>
+                          {q.options && Array.isArray(q.options) && (
+                            <div className="mt-2 space-y-1">
+                              {(q.options as string[]).map((opt, i) => {
+                                const isCorrect = opt === q.correctAnswer;
+                                return (
+                                  <div key={i} className={`text-[10px] px-2 py-1 rounded flex items-start gap-1.5 ${
+                                    isCorrect
+                                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-bold'
+                                      : 'text-slate-500 dark:text-slate-400'
+                                  }`}>
+                                    <span className="shrink-0 font-bold">{String.fromCharCode(65 + i)}.</span>
+                                    <span>{opt}</span>
+                                    {isCorrect && <span className="ml-auto shrink-0">✓</span>}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       </button>
                     );

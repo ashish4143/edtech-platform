@@ -76,6 +76,7 @@ model Question {
   content       String          // Text or Markdown
   options       Json?           // JSONB for MCQ choices e.g. ["A", "B", "C", "D"]
   correctAnswer String?         @map("correct_answer")
+  explanation   String?          // Answer explanation text
   tags          String[]        // Array of string tags
   createdAt     DateTime        @default(now()) @map("created_at")
 

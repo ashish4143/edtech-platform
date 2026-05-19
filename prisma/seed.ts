@@ -623,6 +623,134 @@ async function main() {
   }
   console.log(`Inserted ${b3Count} specific user-requested questions (Batch 3).`);
 
+  // Helper with explanation support (topic = subtopic, chapter = parent chapter)
+  const QE = (board: string, grade: string, subject: string, topic: string, chapter: string, difficulty: Difficulty, content: string, options: string[], correctAnswer: string, explanation: string) => ({
+    board, grade, subject, topic, chapter, difficulty, type: QuestionType.MCQ, content, options, correctAnswer, explanation, tags: [chapter.toLowerCase().replace(/\s+/g, ''), topic.toLowerCase().replace(/\s+/g, '')],
+  });
+
+  const batch4 = [
+    // === ICSE Grade 9 Maths — Expansions (Easy) ===
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'Expand: (x + 5)(x + 3)',['x² + 8x + 15','x² + 15x + 8','x² + 8x + 8','x² + 15'],'x² + 8x + 15','Using (x + a)(x + b) = x² + (a+b)x + ab: (x+5)(x+3) = x² + 8x + 15'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'Expand: (x – 6)(x + 6)',['x² – 36','x² + 36','x² – 12x – 36','x² – 6'],'x² – 36','Using (a + b)(a – b) = a² – b²: (x–6)(x+6) = x² – 36'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'Expand: (a + 7)²',['a² + 14a + 49','a² + 7a + 49','a² + 49','a² + 14a + 7'],'a² + 14a + 49','Using (a + b)² = a² + 2ab + b²: (a+7)² = a² + 14a + 49'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'Expand: (2x – 3)²',['4x² – 12x + 9','4x² + 12x + 9','4x² – 6x + 9','4x² – 9'],'4x² – 12x + 9','Using (a – b)² = a² – 2ab + b²: (2x–3)² = 4x² – 12x + 9'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'The value of (a + b)² – (a – b)² is:',['4ab','2ab','4a²','2(a² + b²)'],'4ab','(a+b)² = a²+2ab+b² and (a–b)² = a²–2ab+b². Their difference = 4ab.'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'Which identity is used to expand (3x + 4y)(3x – 4y)?',['(a+b)(a–b) = a²–b²','(a+b)² = a²+2ab+b²','(a–b)² = a²–2ab+b²','(x+a)(x+b) = x²+(a+b)x+ab'],'(a+b)(a–b) = a²–b²','(3x+4y)(3x–4y) follows (a+b)(a–b) = a²–b², giving 9x²–16y².'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'Expand: (5a + 2b)(5a – 2b)',['25a² – 4b²','25a² + 4b²','25a² – 20ab – 4b²','10a – 4b'],'25a² – 4b²','Using (a+b)(a–b) = a²–b²: (5a+2b)(5a–2b) = 25a² – 4b²'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'Expand: (x + 4)(x – 9)',['x² – 5x – 36','x² + 5x – 36','x² – 36x – 5','x² – 5x + 36'],'x² – 5x – 36','Using (x+a)(x+b) = x²+(a+b)x+ab: a=4, b=–9. Sum=–5, product=–36.'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'If a = 3 and b = 2, find (a + b)².',['25','13','12','10'],'25','(a + b)² = (3 + 2)² = 5² = 25'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'The expansion of (a – b)² equals:',['a² – 2ab + b²','a² + 2ab + b²','a² – b²','a² – 2ab – b²'],'a² – 2ab + b²','(a – b)² = a² – 2ab + b² is the standard identity.'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'Evaluate 103 × 97 using an identity.',['10000 – 9 = 9991','10000 + 9 = 10009','10000 – 6 = 9994','103 × 97 = 9981'],'10000 – 9 = 9991','103×97 = (100+3)(100–3) = 100²–3² = 10000–9 = 9991'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'Expand: (2a + 3b)²',['4a² + 12ab + 9b²','4a² + 6ab + 9b²','4a² + 9b²','4a² – 12ab + 9b²'],'4a² + 12ab + 9b²','(2a+3b)² = 4a² + 12ab + 9b²'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'What is (a + b)² + (a – b)²?',['2(a² + b²)','2ab','4ab','2a²'],'2(a² + b²)','(a+b)²+(a–b)² = a²+2ab+b²+a²–2ab+b² = 2(a²+b²)'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'Evaluate 102² using the identity (a + b)².',['10404','10202','10004','10400'],'10404','102² = (100+2)² = 10000 + 400 + 4 = 10404'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'Expand: (x + y)(x – y)(x² + y²)',['x⁴ – y⁴','x⁴ + y⁴','x² – y²','x⁴ – 2x²y² + y⁴'],'x⁴ – y⁴','(x+y)(x–y) = x²–y². Then (x²–y²)(x²+y²) = x⁴–y⁴'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Easy,'If (a + b) = 7 and ab = 12, find a² + b².',['25','49','1','61'],'25','a²+b² = (a+b)² – 2ab = 49 – 24 = 25'),
+    // === ICSE Grade 9 Maths — Factorisation (Easy) ===
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Easy,'Factorise: x² – 16',['(x + 4)(x – 4)','(x – 4)²','(x + 4)²','(x – 8)(x + 2)'],'(x + 4)(x – 4)','x²–16 = x²–4² = (x+4)(x–4)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Easy,'Factorise: 9a² – 25b²',['(3a + 5b)(3a – 5b)','(3a – 5b)²','(9a + 25b)(a – b)','(3a)² – (5b)²'],'(3a + 5b)(3a – 5b)','9a²–25b² = (3a)²–(5b)² = (3a+5b)(3a–5b)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Easy,'Factorise: 6ax – 6ay',['6a(x – y)','6(ax – ay)','a(6x – 6y)','All of the above'],'All of the above','All three are equivalent; simplest form is 6a(x – y).'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Easy,'Factorise: 4x² – 9',['(2x – 3)(2x + 3)','(4x – 9)(x + 1)','(2x – 3)²','(2x + 3)²'],'(2x – 3)(2x + 3)','4x²–9 = (2x)²–3² = (2x–3)(2x+3)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Easy,'The HCF of 12a²b and 16ab² is:',['4ab','4a²b²','12ab','48a²b²'],'4ab','HCF of 12 and 16 = 4; HCF of a²,a = a; HCF of b,b² = b. So 4ab.'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Easy,'Factorise: 7ax – 7x + ap – p',['(a – 1)(7x + p)','(7x + p)(a + 1)','(a – 1)(7x – p)','(7x – p)(a + 1)'],'(a – 1)(7x + p)','Group: 7x(a–1) + p(a–1) = (a–1)(7x+p)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Easy,'Factorise: x² + 5x + 6',['(x + 2)(x + 3)','(x + 1)(x + 6)','(x + 6)(x – 1)','(x – 2)(x – 3)'],'(x + 2)(x + 3)','Two numbers with sum 5 and product 6: 2 and 3.'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Easy,'Factorise: x² – 5x + 6',['(x – 2)(x – 3)','(x + 2)(x – 3)','(x – 2)(x + 3)','(x – 6)(x + 1)'],'(x – 2)(x – 3)','Two numbers with sum –5 and product 6: –2 and –3.'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Easy,'Factorise: ax – ay + bx – by',['(a + b)(x – y)','(a – b)(x + y)','(a + b)(x + y)','(a – b)(x – y)'],'(a + b)(x – y)','Group: a(x–y) + b(x–y) = (a+b)(x–y)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Easy,'Factorise: 2a³ – 6a',['2a(a² – 3)','2(a³ – 3a)','a(2a² – 6)','All equivalent'],'2a(a² – 3)','HCF = 2a. So 2a³–6a = 2a(a²–3).'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Easy,'Factorise: cd – c – d + 1',['(c – 1)(d – 1)','(c + 1)(d – 1)','(c – 1)(d + 1)','(c + 1)(d + 1)'],'(c – 1)(d – 1)','c(d–1) –1(d–1) = (c–1)(d–1)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Easy,'Factorise: 25x² – 1',['(5x – 1)(5x + 1)','(25x – 1)(x + 1)','(5x + 1)²','(5x – 1)²'],'(5x – 1)(5x + 1)','25x²–1 = (5x)²–1² = (5x–1)(5x+1)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Easy,'Which of the following is fully factorised?',['2(x² – 4)','2(x + 2)(x – 2)','(2x + 4)(x – 2)','None of these'],'2(x + 2)(x – 2)','x²–4 = (x+2)(x–2), so 2(x²–4) = 2(x+2)(x–2) is fully factorised.'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Easy,'Factorise: 5a – b + 5ax – bx',['(5a – b)(1 + x)','(5a + b)(1 – x)','(5a – b)(1 – x)','(5a + b)(1 + x)'],'(5a – b)(1 + x)','Group: (5a–b) + x(5a–b) = (5a–b)(1+x)'),
+    // === ICSE Grade 9 Maths — Expansions (Medium) ===
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'Expand: (2a – 3b + 5c)²',['4a² + 9b² + 25c² – 12ab – 30bc + 20ac','4a² + 9b² + 25c² – 12ab + 30bc – 20ac','4a² + 9b² + 25c² + 12ab – 30bc + 20ac','4a² + 9b² + 25c² – 12ab – 30bc – 20ac'],'4a² + 9b² + 25c² – 12ab – 30bc + 20ac','Using (p+q+r)² with p=2a, q=–3b, r=5c.'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'If a + b + c = 6 and a² + b² + c² = 14, find ab + bc + ca.',['11','22','36 – 14 = 11','10'],'11','(a+b+c)² = a²+b²+c²+2(ab+bc+ca) → 36 = 14 + 2(ab+bc+ca) → ab+bc+ca = 11'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'Expand: (x + 2y – 3z)(x + 2y + 3z)',['x² + 4y² – 9z² + 4xy','x² + 4xy + 4y² – 9z²','x² + 4y² + 9z² + 4xy','(x + 2y)² + 9z²'],'x² + 4xy + 4y² – 9z²','Let A=x+2y. (A–3z)(A+3z) = A²–9z² = x²+4xy+4y²–9z²'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'Evaluate: 98³ + 6(98)² + 12(98) + 8',['1000000','970299','1030301','998001'],'1000000','Expression = (98+2)³ = 100³ = 1,000,000.'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'If x – 1/x = 3, find x² + 1/x².',['11','7','9','13'],'11','(x–1/x)² = x²–2+1/x² → 9 = x²+1/x²–2 → x²+1/x² = 11'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'Expand: (5ab – 4cd)²',['25a²b² – 40abcd + 16c²d²','25a²b² + 40abcd + 16c²d²','25a²b² – 16c²d²','25a²b² – 20abcd + 16c²d²'],'25a²b² – 40abcd + 16c²d²','(5ab–4cd)² = 25a²b²–40abcd+16c²d²'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'If a + b = 7 and ab = 12, find a³ + b³.',['91','133','343','49'],'91','a³+b³ = (a+b)³–3ab(a+b) = 343–252 = 91'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'Evaluate (25)³ + (–12)³ + (–13)³ without calculating cubes.',['–11700','11700','0','–12'],'11700','25+(–12)+(–13)=0. When a+b+c=0, a³+b³+c³=3abc=3×25×(–12)×(–13)=11700'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'If a² + b² + c² = 45 and ab + bc + ca = 18, find (a + b + c).',['9','81','3√9','√81 = 9'],'9','(a+b+c)² = 45+36 = 81 → a+b+c = 9'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'Expand: (3x – 8y)²',['9x² – 48xy + 64y²','9x² + 48xy + 64y²','9x² – 24xy + 64y²','9x² – 48xy – 64y²'],'9x² – 48xy + 64y²','(3x–8y)² = 9x²–48xy+64y²'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'If x + 1/x = 5, find x³ + 1/x³.',['110','125','115','100'],'110','x²+1/x²=23. x³+1/x³=(x+1/x)(x²–1+1/x²)=5×22=110'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'Evaluate using identity: 4.7² – 3.7²',['8.4','16','8','8.4'],'8.4','a²–b² = (a+b)(a–b) = (4.7+3.7)(4.7–3.7) = 8.4×1 = 8.4'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'Expand: (5x – 4y)³',['125x³ – 300x²y + 240xy² – 64y³','125x³ + 300x²y + 240xy² + 64y³','125x³ – 240x²y + 300xy² – 64y³','125x³ – 60x²y + 240xy² – 64y³'],'125x³ – 300x²y + 240xy² – 64y³','(a–b)³ = a³–3a²b+3ab²–b³ with a=5x, b=4y.'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'If ab + bc + ca = 27 and a + b + c = 9, find a² + b² + c².',['27','81','54','81 – 54 = 27'],'27','a²+b²+c² = (a+b+c)²–2(ab+bc+ca) = 81–54 = 27'),
+    // === ICSE Grade 9 Maths — Factorisation (Medium) ===
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: 16a⁴ – 625b⁴',['(4a² + 25b²)(2a + 5b)(2a – 5b)','(4a² – 25b²)(4a² + 25b²)','(2a + 5b)²(2a – 5b)²','(4a² + 25b²)(2a – 5b)²'],'(4a² + 25b²)(2a + 5b)(2a – 5b)','16a⁴–625b⁴ = (4a²+25b²)(4a²–25b²) = (4a²+25b²)(2a+5b)(2a–5b)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: 2a³ – a² – 6a + 3',['(2a – 1)(a² – 3)','(a – 3)(2a² – 1)','(2a – 1)(a – √3)(a + √3)','a(2a – 1)(a – 3)'],'(2a – 1)(a² – 3)','Group: a²(2a–1)–3(2a–1) = (2a–1)(a²–3)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: 25(x + y)² – x² + 4xy – 4y²',['(5x + 5y + x – 2y)(5x + 5y – x + 2y)','(6x + 3y)(4x + 7y)','(5x + 5y – x + 2y)(5x + 5y + x – 2y)','(x + 7y)(9x + 3y)'],'(5x + 5y + x – 2y)(5x + 5y – x + 2y)','25(x+y)²–(x–2y)² = [5(x+y)+(x–2y)][5(x+y)–(x–2y)]'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: a⁴ – 25b² + 30b – 9',['(a² + 5b – 3)(a² – 5b + 3)','(a² + 5b + 3)(a² – 5b – 3)','(a² – 5b + 3)²','(a + 5b – 3)(a – 5b + 3)'],'(a² + 5b – 3)(a² – 5b + 3)','–25b²+30b–9 = –(5b–3)². So a⁴–(5b–3)² = (a²+5b–3)(a²–5b+3)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: x² + (1/x²) – 2 + 5x – (5/x)',['(x – 1/x)(x – 1/x + 5)','(x – 1/x + 5)(x – 1/x)','(x + 1/x – 1)(x – 5)','(x – 1/x)² + 5(x – 1/x)'],'(x – 1/x)(x – 1/x + 5)','Let t=x–1/x. Expression = t²+5t = t(t+5)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: 49a² – 9b² + 30bc – 25c²',['(7a + 3b – 5c)(7a – 3b + 5c)','(7a + 3b + 5c)(7a – 3b – 5c)','(7a – 3b – 5c)²','(7a + 5c)(7a – 3b)'],'(7a + 3b – 5c)(7a – 3b + 5c)','–9b²+30bc–25c² = –(3b–5c)². So 49a²–(3b–5c)² = (7a+3b–5c)(7a–3b+5c)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: 3a² – 6a – ka + 2k + am – 2m',['(a – 2)(3a – k + m)','(3a + k)(a – 2m)','(a – 2)(3a + m – k)','(a + 2)(3a – k)'],'(a – 2)(3a – k + m)','Group: 3a(a–2)–k(a–2)+m(a–2) = (a–2)(3a–k+m)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: ax – ay – 5x + 5y',['(a – 5)(x – y)','(a + 5)(x – y)','(a – 5)(x + y)','(x – y)(a + 5)'],'(a – 5)(x – y)','a(x–y)–5(x–y) = (a–5)(x–y)'),
+  ];
+
+  let b4Count = 0;
+  for (const q of batch4) {
+    const exists = await prisma.question.findFirst({ where: { content: q.content } });
+    if (!exists) { await prisma.question.create({ data: q }); b4Count++; }
+  }
+  console.log(`Inserted ${b4Count} ICSE Grade 9 Maths questions (Batch 4).`);
+
+  const batch5 = [
+    // === Medium ===
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: 8x² – 200y²',['8(x – 5y)(x + 5y)','4(2x – 5y)(2x + 5y)','8(x + 5y)²','(8x – y)(x + 200y)'],'8(x – 5y)(x + 5y)','8x²–200y² = 8(x²–25y²) = 8(x–5y)(x+5y)'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'Expand: (3x + 1/(3x))³',['27x³ + 9x + 1/x + 1/(27x³)','27x³ + 9x – 1/x – 1/(27x³)','27x³ + 27x + 1/x + 1/(27x³)','27x³ + 9x + 3/x + 1/(27x³)'],'27x³ + 9x + 1/x + 1/(27x³)','(a+b)³ with a=3x, b=1/(3x): 27x³+9x+1/x+1/27x³'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: a² – 3b + ab – 3a',['(a – 3)(a + b)','(a + 3)(a – b)','(a – b)(a + 3)','(a + b)(a – 3)'],'(a – 3)(a + b)','Reorder: a²+ab–3a–3b = a(a+b)–3(a+b) = (a–3)(a+b)'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'If x² + y² = 34 and xy = 10.5, find (x + y)² and (x – y)².',['55 and 13','55 and 34','34 and 13','68 and 13'],'55 and 13','(x+y)²=34+21=55. (x–y)²=34–21=13'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: x² + (1/x²) + 2 – 5(x + 1/x)',['(x + 1/x)(x + 1/x – 5)','(x + 1/x – 5)(x + 1/x)','(x + 1/x)² – 5(x + 1/x)','Both A and C'],'Both A and C','Let t=x+1/x. x²+1/x²+2=t². Expression=t²–5t=t(t–5)'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'If a + b + c = 0, find a² + b² + c² when ab + bc + ca = –14.',['28','14','0','42'],'28','(a+b+c)²=a²+b²+c²+2(ab+bc+ca) → 0=a²+b²+c²–28 → 28'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'Expand: (4a + 5b – 7)(4a – 5b + 7)',['16a² – (5b – 7)²','16a² – 25b² + 70b – 49','16a² – 25b² – 49','16a² – 25b² – 70b + 49'],'16a² – 25b² + 70b – 49','[4a+(5b–7)][4a–(5b–7)]=16a²–(5b–7)²=16a²–25b²+70b–49'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'Find the product: (5x + 4y + 2)(5x + 4y – 2)',['25x² + 40xy + 16y² – 4','25x² + 16y² – 4','(5x + 4y)² – 4','Both A and C'],'Both A and C','(5x+4y+2)(5x+4y–2)=(5x+4y)²–4=25x²+40xy+16y²–4'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: b(x – y) – 3(y – x)',['(x – y)(b + 3)','(x – y)(b – 3)','(y – x)(b + 3)','(x + y)(b – 3)'],'(x – y)(b + 3)','(y–x)=–(x–y). So b(x–y)+3(x–y)=(x–y)(b+3)'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'If a – b = 4 and a² + b² = 40, find ab.',['12','10','24','8'],'12','(a–b)²=a²–2ab+b² → 16=40–2ab → ab=12'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: a⁴ – b⁴',['(a² + b²)(a + b)(a – b)','(a² – b²)²','(a + b)²(a – b)²','(a² + b²)²'],'(a² + b²)(a + b)(a – b)','a⁴–b⁴=(a²+b²)(a²–b²)=(a²+b²)(a+b)(a–b)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: (x + y)² – (x – y)²',['4xy','2xy','4(x² – y²)','2(x + y)'],'4xy','[(x+y)+(x–y)][(x+y)–(x–y)]=(2x)(2y)=4xy'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Medium,'If a = 5 and b = 3, evaluate a³ – b³ – 3ab(a – b).',['8','125 – 27 – 54 = 44','0','8'],'8','a³–b³–3ab(a–b)=(a–b)³=(5–3)³=8'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Medium,'Factorise: 12a²b – 16ab² – 28a²b²',['4ab(3a – 4b – 7ab)','4ab(3a + 4b – 7ab)','4ab(3a – 4b + 7ab)','4(3a²b – 4ab² – 7a²b²)'],'4ab(3a – 4b – 7ab)','HCF=4ab. Answer: 4ab(3a–4b–7ab)'),
+    // === Hard ===
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Hard,'If x + 1/x = 3, find x⁶ + 1/x⁶.',['322','324','318','312'],'322','x²+1/x²=7. x³+1/x³=18. x⁶+1/x⁶=324–2=322'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Hard,'If a + b + c = 6, ab + bc + ca = 11, find a² + b² + c² and a³ + b³ + c³ – 3abc.',['14 and 36','14 and 18','25 and 18','36 and 14'],'14 and 18','a²+b²+c²=36–22=14. a³+b³+c³–3abc=6×(14–11)=18'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Hard,'Factorise: (a² + 9b² – c²)² – 36a²b²',['(a + 3b + c)(a + 3b – c)(a – 3b + c)(a – 3b – c)','(a² + 9b² – c² + 6ab)(a² + 9b² – c² – 6ab)','(a + 3b)² – c²)(a – 3b)² – c²)','Both A and B'],'Both A and B','(a²+9b²–c²)²–(6ab)²=[(a+3b)²–c²][(a–3b)²–c²]'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Hard,'Factorise: x² + 1/x² – 2 + 5x – 5/x',['(x – 1/x)(x – 1/x + 5)','(x – 1/x + 5)(x – 1/x – 5)','(x – 1/x)² + 5(x – 1/x)','Both A and C'],'Both A and C','Let t=x–1/x. t²=x²–2+1/x². Expression=t²+5t=t(t+5)'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Hard,'If a + b = p and ab = q, express a⁴ + b⁴ in terms of p and q.',['p⁴ – 4p²q + 2q²','p⁴ – 4p²q – 2q²','p⁴ + 4p²q + 2q²','p⁴ – 2p²q + 2q²'],'p⁴ – 4p²q + 2q²','a²+b²=p²–2q. a⁴+b⁴=(p²–2q)²–2q²=p⁴–4p²q+2q²'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Hard,'Factorise: 25a² – 9b² + 30bc – 25c²',['(5a + 3b – 5c)(5a – 3b + 5c)','(5a – 3b + 5c)(5a + 3b – 5c)','(5a)² – (3b – 5c)²','Both A and C'],'Both A and C','–9b²+30bc–25c²=–(3b–5c)². So (5a)²–(3b–5c)²'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Hard,'If x – 3/x = 5, find x³ – 27/x³.',['170','125','152','143'],'170','x²+9/x²=31. x³–27/x³=5×34=170'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Hard,'Factorise completely: 2a³ + 16b³',['2(a + 2b)(a² – 2ab + 4b²)','2(a – 2b)(a² + 2ab + 4b²)','(a + 2b)(2a² – 4ab + 8b²)','2a(a² + 8b²)'],'2(a + 2b)(a² – 2ab + 4b²)','2(a³+8b³)=2(a+2b)(a²–2ab+4b²)'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Hard,'If a² + b² + c² = 74 and ab + bc + ca = 61, find a + b + c.',['14','13','196','√196 = 14'],'√196 = 14','(a+b+c)²=74+122=196 → a+b+c=14'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Hard,'If ab + bc + ca = 31 and a² + b² + c² = 38, evaluate a² + b² + c² – ab – bc – ca.',['7','69','Cannot be factorised','7'],'7','38–31=7'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Hard,'Factorise: a⁴ + 4b⁴ (Sophie Germain Identity)',['(a² + 2b² + 2ab)(a² + 2b² – 2ab)','(a² – 2b²)² + 4a²b²','(a² + 2b²)² – 4a²b²','Both A and B'],'(a² + 2b² + 2ab)(a² + 2b² – 2ab)','a⁴+4b⁴=(a²+2b²)²–4a²b²=(a²+2b²+2ab)(a²+2b²–2ab)'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Hard,'If x⁴ + 1/x⁴ = 2, find x³ + 1/x³.',['2','0','√2','1'],'2','x²+1/x²=2. x+1/x=±2. x³+1/x³=8–6=2'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Hard,'Factorise: a² – b² – c² + 2bc',['(a + b – c)(a – b + c)','(a – b – c)(a + b + c)','(a – b + c)(a + b – c)','Both A and C'],'Both A and C','a²–(b–c)²=(a+b–c)(a–b+c)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Hard,'Factorise: (x + y)³ – (x – y)³',['2y(3x² + y²)','2y(x² + 3y²)','6xy(x + y)','2(3x²y + y³)'],'2y(3x² + y²)','a³–b³=(a–b)(a²+ab+b²). Difference=2y, rest=3x²+y²'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Hard,'Factorise: x⁴ – y⁴ + x² – y²',['(x² + y²)(x + y)(x – y) + (x + y)(x – y)','(x² + y² + 1)(x + y)(x – y)','(x² – y²)(x² + y² + 1)','Both B and C'],'Both B and C','(x⁴–y⁴)+(x²–y²)=(x²–y²)(x²+y²+1)=(x+y)(x–y)(x²+y²+1)'),
+    // === Olympiad ===
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Olympiad,'If a + b + c = 0, and a⁴ + b⁴ + c⁴ = 50, find a² + b² + c².',['10','100','50','√50'],'10','(a²+b²+c²)²=2(a⁴+b⁴+c⁴)=100 → a²+b²+c²=10'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Olympiad,'If x + y + z = 1, xy + yz + zx = –1 and xyz = –1, find x³ + y³ + z³.',['1','4','–4','2'],'1','x²+y²+z²=3. x³+y³+z³–3xyz=1×(3+1)=4. x³+y³+z³=4+3(–1)=1'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Olympiad,'Factorise: a³ + b³ + c³ – 3abc',['(a + b + c)(a² + b² + c² – ab – bc – ca)','(a + b + c)((a–b)² + (b–c)² + (c–a)²)/2','(a + b + c)(a² + b² + c² – ab – bc – ca)','Both A and C'],'Both A and C','a³+b³+c³–3abc=(a+b+c)(a²+b²+c²–ab–bc–ca)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Olympiad,'Factorise: (a – b)³ + (b – c)³ + (c – a)³',['3(a – b)(b – c)(c – a)','0','(a – b + b – c + c – a)³','3abc'],'3(a – b)(b – c)(c – a)','Let p=a–b,q=b–c,r=c–a. p+q+r=0 → p³+q³+r³=3pqr'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Olympiad,'Find the value of (a – b)(a + b) + (b – c)(b + c) + (c – a)(c + a).',['0','a² + b² + c²','2(a² + b² + c²)','1'],'0','(a²–b²)+(b²–c²)+(c²–a²)=0'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Olympiad,'Factorise: x⁶ – y⁶',['(x – y)(x + y)(x² + xy + y²)(x² – xy + y²)','(x³ – y³)(x³ + y³)','(x² – y²)(x⁴ + x²y² + y⁴)','All of the above'],'All of the above','x⁶–y⁶=(x³–y³)(x³+y³). All forms are equivalent.'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Olympiad,'If a/b + b/a = 1, find a³/b³ + b³/a³.',['–2','1','0','–1'],'–2','Let t=a/b+b/a=1. a³/b³+b³/a³=t³–3t=1–3=–2'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Olympiad,'Factorise: a²(b – c) + b²(c – a) + c²(a – b)',['(a – b)(b – c)(c – a)','–(a – b)(b – c)(a – c)','(a – b)(b – c)(a – c)','Both A and B'],'Both A and B','At a=b expression=0 → (a–b) is factor. Similarly (b–c). Result=(a–b)(b–c)(c–a)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Olympiad,'Factorise: (x + y + z)³ – x³ – y³ – z³',['3(x + y)(y + z)(z + x)','3xyz','(x + y + z)(xy + yz + zx)','3(x + y + z)(xy + yz + zx) – 3xyz'],'3(x + y)(y + z)(z + x)','Known identity: (x+y+z)³–x³–y³–z³=3(x+y)(y+z)(z+x)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Olympiad,'Factorise: (a + b)³ + (b + c)³ + (c + a)³ – 3(a + b)(b + c)(c + a), given a + b + c = 0.',['0','3abc','(a+b+c)³','2(a³+b³+c³)'],'0','When a+b+c=0: p+q+r=0 → p³+q³+r³–3pqr=0'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Olympiad,'If x = (√5 + √3)/(√5 – √3) and y = (√5 – √3)/(√5 + √3), find x² + y² + xy.',['15','16','√15','17'],'15','xy=1, x+y=4. x²+y²=14. x²+y²+xy=15'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Olympiad,'Factorise: a⁶ + b⁶',['(a² + b²)(a⁴ – a²b² + b⁴)','(a² + b²)³ – 3a²b²(a² + b²)','Cannot be factorised over integers','Both A and B'],'Both A and B','a⁶+b⁶=(a²)³+(b²)³=(a²+b²)(a⁴–a²b²+b⁴)'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Olympiad,'Factorise: x³ – 6x² + 11x – 6',['(x – 1)(x – 2)(x – 3)','(x + 1)(x + 2)(x + 3)','(x – 1)(x – 2)(x + 3)','(x – 6)(x² + 1)'],'(x – 1)(x – 2)(x – 3)','x=1: 1–6+11–6=0. Factor: (x–1)(x²–5x+6)=(x–1)(x–2)(x–3)'),
+    QE('ICSE','9','Maths','Expansions','Algebra',Difficulty.Olympiad,'Given a + b = 1, find the minimum value of a⁴ + b⁴.',['1/4','1/8','1/2','1'],'1/8','At a=b=1/2: a⁴+b⁴=(1/2)²–2(1/16)=1/4–1/8=1/8'),
+    QE('ICSE','9','Maths','Factorisation','Algebra',Difficulty.Olympiad,'Factorise: a¹² – b¹²',['(a⁶+b⁶)(a²+b²)(a+b)(a–b)(a²–ab+b²)(a²+ab+b²)','(a–b)(a+b)(a²+ab+b²)(a²–ab+b²)(a²+b²)(a⁴–a²b²+b⁴)','(a⁶–b⁶)(a⁶+b⁶)','Both A and B'],'Both A and B','a¹²–b¹²=(a⁶–b⁶)(a⁶+b⁶). All forms equivalent.'),
+  ];
+
+  let b5Count = 0;
+  for (const q of batch5) {
+    const exists = await prisma.question.findFirst({ where: { content: q.content } });
+    if (!exists) { await prisma.question.create({ data: q }); b5Count++; }
+  }
+  console.log(`Inserted ${b5Count} ICSE Grade 9 Maths questions (Batch 5 — Hard & Olympiad).`);
+
   // --- Auto Create the 10 Specific Tests ---
   const specs = [
     { title: '12th CBSE Maths: Relations and Functions', board: 'CBSE', grade: '12', subject: 'Maths', chap: 'Relations and Functions', dur: 80 },

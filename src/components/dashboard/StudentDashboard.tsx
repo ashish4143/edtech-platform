@@ -165,12 +165,29 @@ export default function StudentDashboard({ onStartAttempt, userId, userName, aut
                     </p>
                   </div>
 
-                  <button
-                    onClick={() => onStartAttempt(t.id)}
-                    className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-indigo-600/20 transition-colors"
-                  >
-                    <Play className="w-3 h-3 fill-current" /> Launch Assigned Test
-                  </button>
+                  {(() => {
+                    const isExpired = t.expiresAt && new Date(t.expiresAt).getTime() < Date.now();
+                    
+                    if (isExpired) {
+                      return (
+                        <button
+                          disabled
+                          className="w-full py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm border border-slate-200 dark:border-slate-700 cursor-not-allowed"
+                        >
+                          Expired on {new Date(t.expiresAt).toLocaleDateString()}
+                        </button>
+                      );
+                    }
+                    
+                    return (
+                      <button
+                        onClick={() => onStartAttempt(t.id)}
+                        className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-indigo-600/20 transition-colors"
+                      >
+                        <Play className="w-3 h-3 fill-current" /> Launch Assigned Test
+                      </button>
+                    );
+                  })()}
                 </div>
               );
             })}
@@ -241,9 +258,16 @@ export default function StudentDashboard({ onStartAttempt, userId, userName, aut
                 <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 block">
                   Post-Attempt Diagnostic Scorecard
                 </span>
-                <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100">
-                  {reviewData?.attempt?.test?.title || 'Loading Test Metadata...'}
-                </h3>
+                <div className="flex items-center gap-3 mt-1">
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100">
+                    {reviewData?.attempt?.test?.title || 'Loading Test Metadata...'}
+                  </h3>
+                  {reviewData?.attempt && (
+                    <span className="px-2.5 py-0.5 rounded text-xs font-extrabold bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                      Score: {reviewData.attempt.totalScore} / {reviewData.attempt.test?.totalMarks}
+                    </span>
+                  )}
+                </div>
               </div>
               <button 
                 onClick={closeReview}

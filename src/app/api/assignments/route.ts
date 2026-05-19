@@ -60,7 +60,7 @@ export async function GET(request: Request) {
       where: whereClause,
       include: {
         test: {
-          select: { id: true, title: true, subject: true, durationMins: true, totalMarks: true, grade: true },
+          select: { id: true, title: true, subject: true, durationMins: true, totalMarks: true, grade: true, expiresAt: true },
         },
         student: {
           select: { id: true, name: true, email: true },
